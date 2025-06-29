@@ -2,10 +2,14 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import pygame
+import imageio
 
 class NeuroQuantEnv(gym.Env):
     def __init__(self, render_mode=None):
         super().__init__()
+
+        self.obs_mode = "image"  # "vector" or "image"
+
 
         # Grid + Game Setup
         self.grid_size = 10  # 10x10 grid
@@ -24,12 +28,21 @@ class NeuroQuantEnv(gym.Env):
         self.agent_dir = 1  # 0=up, 1=right, 2=down, 3=left
 
         # Observation = 3x3 local grid
-        self.observation_space = spaces.Box(
-            low=0,
-            high=2,
-            shape=(3, 3),
-            dtype=np.int8
-        )
+        if self.obs_mode == "image":
+            self.observation_space = spaces.Box(
+                low=0,
+                high=2,
+                shape=(3, 3),
+                dtype=np.int8
+            )
+        else:  # vector
+            self.observation_space = spaces.Box(
+                low=0,
+                high=self.grid_size - 1,
+                shape=(4,),
+                dtype=np.float32
+            )
+
 
         # Action: turn left, go forward, turn right
         self.action_space = spaces.Discrete(3)
@@ -48,6 +61,8 @@ class NeuroQuantEnv(gym.Env):
         # Reset agent
         self.agent_pos = np.array([0, 0])
         self.agent_dir = 1  # start facing right
+        self.episode_reward = 0  # NEW
+        self.reward_history = []  # NEW
 
         observation = self._get_obs()
         return observation, {}
@@ -85,6 +100,9 @@ class NeuroQuantEnv(gym.Env):
         if self.grid[self.agent_pos[0], self.agent_pos[1]] == 2:
             reward = 10
             terminated = True
+
+        self.episode_reward += reward
+        self.reward_history.append(reward)
 
         return self._get_obs(), reward, terminated, truncated, {}
 
@@ -145,13 +163,43 @@ class NeuroQuantEnv(gym.Env):
             pygame.quit()
 
     def _get_obs(self):
-        row, col = self.agent_pos
-        padded_grid = np.pad(self.grid, pad_width=1, mode='constant', constant_values=1)
+        if self.obs_mode == "image":
+            row, col = self.agent_pos
+            padded_grid = np.pad(self.grid, pad_width=1, mode='constant', constant_values=1)
+            row += 1
+            col += 1
+            local_obs = padded_grid[row - 1:row + 2, col - 1:col + 2]
+            return local_obs
+        else:  # vector
+            goal_pos = np.argwhere(self.grid == 2)
+            goal_row, goal_col = goal_pos[0] if len(goal_pos) > 0 else (9, 9)
+            return np.array([
+                self.agent_pos[0],
+                self.agent_pos[1],
+                goal_row,
+                goal_col
+            ], dtype=np.float32)
+        
 
-        # Offset agent position for padded grid
-        row += 1
-        col += 1
+    def render_episode_gif(self, path="docs/replays/episode.gif", duration=0.1):
+        frames = []
 
-        local_obs = padded_grid[row - 1:row + 2, col - 1:col + 2]
-        return local_obs
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                if self.grid[r, c] == 2:
+                    goal_pos = (r, c)
+
+        self.reset()
+        done = False
+        steps = 0
+
+        while not done and steps < 100:
+            action = self.action_space.sample()
+            obs, reward, done, trunc, _ = self.step(action)
+            self.render()
+            frame = pygame.surfarray.array3d(self.window).transpose([1, 0, 2])
+            frames.append(frame)
+            steps += 1
+
+        imageio.mimsave(path, frames, duration=duration)
 
