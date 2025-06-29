@@ -4,13 +4,13 @@ import time
 env = NeuroQuantEnv()
 obs, _ = env.reset()
 
-for _ in range(30):
+for _ in range(100):
     action = env.action_space.sample()
     obs, reward, done, trunc, _ = env.step(action)
     env.render()
-    time.sleep(0.1)  # slows down the loop so you can see it
+    time.sleep(1)
+    if done:
+        break
 
 env.close()
-
-# Prevent the script from auto-closing immediately
-input("Press Enter to close the window...")
+input("Press Enter to close...")
