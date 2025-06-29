@@ -1,0 +1,14 @@
+# Binary buffers
+dataset/replay_buffer.npz
+dataset/metadata.txt
+dataset/reward_histogram.png
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# VSCode settings
+.vscode/
+
+# Virtual environment
+.venv/
