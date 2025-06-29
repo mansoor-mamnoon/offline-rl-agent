@@ -32,6 +32,32 @@ The environment is a 10×10 gridworld with directional agent movement, obstacles
 - ⛔ **Obstacles**: Defined in the grid and block movement
 - 🖥️ **Real-time rendering**: PyGame visualization at 10 FPS
 
+## 🧠 Replay Buffer Generation
+
+We simulate random or scripted agents in the custom Gridworld environment to collect experience data for offline RL training.
+
+Each transition includes:
+- `observation`
+- `action`
+- `reward`
+- `next_observation`
+- `done`
+
+These transitions are saved into a compressed `.npz` buffer (`dataset/replay_buffer.npz`), which can later be loaded for training Conservative Q-Learning (CQL), TD3+BC, or BCQ agents.
+
+Additional outputs include:
+- ✅ Episode metadata (average reward, length, and total transitions) saved to `dataset/metadata.txt`
+- 📊 A histogram of reward distribution over episodes saved to `dataset/reward_histogram.png`
+
+To generate the dataset, run:
+
+```bash
+python dataset/collect.py --episodes 100
+```
+
+This will generate 10k+ transitions across 100 episodes using a random policy.
+
+
 
 ## 🎥 Demos + GIFs
 
@@ -39,3 +65,5 @@ The environment supports saving full episodes as GIFs using the `render_episode_
 
 Sample run saved to `docs/replays/test_run.gif`:
 ![Sample Replay](docs/replays/test_run.gif)
+
+
