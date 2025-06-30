@@ -57,6 +57,80 @@ python dataset/collect.py --episodes 100
 
 This will generate 10k+ transitions across 100 episodes using a random policy.
 
+---
+
+## 📁 Project Structure
+
+```bash
+offline-rl-agent/
+│
+├── env/                    # Custom Gym environment (NeuroQuantEnv)
+│   └── neuroquant_env.py
+│
+├── dataset/                # Replay buffer collection + visualizations
+│   ├── collect.py          # Random/scripted policy buffer generation
+│   ├── viz.py              # t-SNE, reward, and action plots
+│   ├── replay_buffer.npz   # (gitignored) Collected transitions
+│   ├── reward_histogram.png
+│   ├── metadata.txt
+│
+├── docs/
+│   └── plots/              # Visual outputs of dataset
+│       ├── tsne_obs.png
+│       ├── action_distribution.png
+│       └── episode_rewards.png
+│
+├── .gitignore
+├── README.md
+└── run_env_test.py         # Debug script to manually interact with env
+```
+
+---
+
+## 📊 Dataset Visualizations
+
+We visualize the replay buffer to verify coverage and distribution:
+
+- 🌀 [t-SNE of Observations](docs/plots/tsne_obs.png): clusters state embeddings in 2D
+- 🎮 [Action Distribution](docs/plots/action_distribution.png): histogram over agent actions
+- 🎯 [Episode Reward Distribution](docs/plots/episode_rewards.png): how returns are spread across episodes
+
+These plots are generated via:
+
+```bash
+python dataset/viz.py
+```
+
+---
+
+## 📦 Getting Started
+
+```bash
+# 1. Clone and enter the repo
+git clone https://github.com/mansoor-mamnoon/offline-rl-agent.git
+cd offline-rl-agent
+
+# 2. Set up virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run environment manually
+python env/run_env_test.py
+
+# 5. Collect dataset
+python dataset/collect.py --episodes 100
+
+# 6. Visualize dataset
+python dataset/viz.py
+```
+
+---
+
+
+
 
 
 ## 🎥 Demos + GIFs
