@@ -98,13 +98,13 @@ offline-rl-agent/
 We visualize the replay buffer to verify coverage and diversity.
 
 - 🌀 **t-SNE of State Vectors**  
-  ![t-SNE](docs/tsne_obs.png)
+  ![t-SNE](docs/plots/tsne_obs.png)
 
 - 🎮 **Action Distribution**  
-  ![Action Histogram](docs/action_distribution.png)
+  ![Action Histogram](docs/plots/action_distribution.png)
 
 - 🎯 **Episode Reward Distribution**  
-  ![Rewards](docs/episode_rewards.png)
+  ![Rewards](docs/plots/episode_rewards.png)
 
 To generate these plots, run:
 
