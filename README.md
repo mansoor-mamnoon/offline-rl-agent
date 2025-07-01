@@ -192,7 +192,6 @@ python agent/train.py
 
 ---
 
-Let me know if you'd like to add evaluation metrics, save checkpoints, or display learning curves in real-time!
 
 
 
