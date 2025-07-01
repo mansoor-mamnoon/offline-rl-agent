@@ -1,0 +1,4 @@
+Num Episodes: 100
+Avg Episode Reward: -24.70
+Avg Episode Length: 348.02
+Total Transitions: 34802
