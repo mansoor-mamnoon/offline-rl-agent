@@ -4,11 +4,29 @@ import numpy as np
 import pygame
 import imageio
 
+def render_episode_gif(env, policy_fn, filename="docs/replays/test_run.gif", max_steps=100, duration=0.1):
+    frames = []
+
+    obs, _ = env.reset()
+    done = False
+    steps = 0
+
+    while not done and steps < max_steps:
+        action = policy_fn(obs)
+        obs, reward, done, _, _ = env.step(action)
+        env.render()
+
+        frame = pygame.surfarray.array3d(env.window).transpose([1, 0, 2])
+        frames.append(frame)
+        steps += 1
+
+    imageio.mimsave(filename, frames, duration=duration)
+
 class NeuroQuantEnv(gym.Env):
-    def __init__(self, render_mode=None):
+    def __init__(self, obs_mode="image", render_mode=None):
         super().__init__()
 
-        self.obs_mode = "image"  # "vector" or "image"
+        self.obs_mode = obs_mode  # ← now configurable via constructor
 
 
         # Grid + Game Setup
