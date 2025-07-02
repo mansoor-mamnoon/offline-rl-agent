@@ -141,7 +141,7 @@ Key Features:
 Run training:
 ```bash
 python agent/train.py
-'''
+```
 Training logs print loss components every 100 epochs.
 
 
