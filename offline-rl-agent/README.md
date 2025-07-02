@@ -141,7 +141,7 @@ Key Features:
 Run training:
 ```bash
 python agent/train.py
-'''
+```
 Training logs print loss components every 100 epochs.
 
 
@@ -163,6 +163,54 @@ Below is the training loss of the Conservative Q-Learning (CQL) agent across 100
 
 These curves help validate that learning is progressing smoothly.
 
+## Logging, Evaluation, and Checkpointing
+
+To monitor training progress and ensure the CQL agent is learning effectively, we implemented:
+
+### ✅ Features Added
+- 🔁 **Evaluation Loop**:
+  - Every 100 epochs, the agent is evaluated on a held-out batch of offline transitions.
+  - Evaluation metrics:
+    - **Policy Accuracy**: how often the agent matches actions from the dataset.
+    - **Average Q-Value**: the mean predicted return across sampled transitions.
+- 📉 **Loss Logging**:
+  - Training losses logged per epoch:
+    - Bellman loss (temporal difference)
+    - Conservative loss (Q regularization)
+    - Behavior cloning (BC) loss
+- 💾 **Checkpointing**:
+  - Automatically saves the `q_net` and `policy` when policy accuracy improves.
+  - Saved to: `checkpoints/best_q.pt` and `checkpoints/best_policy.pt`
+- 📊 **TensorBoard Integration**:
+  - Visualizations include:
+    - [`Eval/PolicyAccuracy`](http://localhost:6006/#scalars&tagFilter=PolicyAccuracy)
+    - [`Eval/AvgQ`](http://localhost:6006/#scalars&tagFilter=AvgQ)
+    - [`Loss/BC`](http://localhost:6006/#scalars&tagFilter=Loss%2FBC)
+    - [`Loss/Bellman`](http://localhost:6006/#scalars&tagFilter=Loss%2FBellman)
+
+To run TensorBoard:
+```bash
+tensorboard --logdir=logs
+```
+
+You can monitor live training and evaluation updates in your browser at:  
+👉 [http://localhost:6006](http://localhost:6006)
+
+### 📂 Files Modified
+- `agent/train.py`: Main training loop updated with:
+  - Evaluation every 100 epochs
+  - TensorBoard logging of loss and accuracy metrics
+  - Checkpoint saving logic for best-performing policy
+
+- `checkpoints/`: Directory created to store `.pt` model weights
+
+---
+
+Example visual output (after training):
+
+![Training Loss Curves](docs/cql_training_losses.png)
+
+---
 
 
 
