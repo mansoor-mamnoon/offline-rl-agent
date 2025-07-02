@@ -1,44 +1,40 @@
 ## 🚀 Project Overview
 
-**NeuroQuant Agent** is a fully custom offline reinforcement learning benchmark, built from the ground up with real-time constraints, compression-aware inference, and deployment to latency-constrained environments.
+NeuroQuant Agent is a fully custom offline reinforcement learning benchmark, built from the ground up with real-time constraints, compression-aware inference, and deployment to latency-constrained environments.
 
 The project begins with a custom-built 10×10 gridworld environment that supports:
 
 - 🔁 **Directional movement**: The agent can turn left, go forward, or turn right relative to its current orientation.
 - 👁️ **Partial observability**: Instead of seeing the entire map, the agent receives a 3×3 view centered around its position.
 - ⛔ **Obstacles**: Impassable wall tiles block the agent's path and require navigation.
-- 🎯 **Goal tile**: A single terminal state gives a large positive reward when reached.
-- 🖥️ **Real-time PyGame rendering**: Each simulation step is rendered at 10 FPS for visual inspection and timing fidelity.
+- 🎯 **Goal tile**: A single terminal state gives a large positive reward when reached, ending the episode.
+- 🖥️ **Real-time PyGame rendering**: Each simulation step is rendered at a capped 10 FPS for visual inspection and timing fidelity.
 
-This environment supports:
-- Offline dataset generation
+This environment is used as the basis for:
+- Generating offline replay buffers
 - Training offline RL agents using CQL, BCQ, or TD3+BC
-- Evaluating model compression tradeoffs (quantization, pruning, distillation)
-- Deploying agents under strict latency and memory constraints
+- Benchmarking model compression tradeoffs (quantization, pruning, distillation)
+- Real-time deployment of agents under latency and memory constraints
 
----
 
 ## 🧠 Environment Design
 
-The environment is a 10×10 gridworld with partial observability and discrete relative movement.
+The environment is a 10×10 gridworld with directional agent movement, obstacles, and a single terminal goal. Key features:
 
-**Key Features:**
-- 🔁 Action space: `Turn Left`, `Move Forward`, `Turn Right`
-- 👁️ Observation: 3×3 local view centered on the agent
-- 🔢 Dual modes:
-  - **Image** mode (local grid)
-  - **Vector** mode (`[agent_x, agent_y, goal_x, goal_y]`)
-- 🎯 Reward structure:
-  - `+10` for reaching the goal
-  - `-0.1` per step
-- ⛔ Obstacles block movement
-- 🖥️ Real-time PyGame rendering at 10 FPS
-
----
+- 🔁 **Action space**: Turn left, move forward, turn right (relative to current orientation)
+- 👁️ **Partial observability**: Agent receives a 3×3 window centered on its current location
+- 🔢 **Dual observation modes**:
+  - **Image**: 3×3 local grid (int matrix)
+  - **Vector**: Agent position and goal coordinates as a flat vector
+- 🎯 **Reward structure**:
+  - `+10` for reaching the goal (sparse)
+  - `-0.1` per step (dense penalty)
+- ⛔ **Obstacles**: Defined in the grid and block movement
+- 🖥️ **Real-time rendering**: PyGame visualization at 10 FPS
 
 ## 🧠 Replay Buffer Generation
 
-We simulate random agents in the custom environment to collect experience for offline RL.
+We simulate random or scripted agents in the custom Gridworld environment to collect experience data for offline RL training.
 
 Each transition includes:
 - `observation`
@@ -47,151 +43,182 @@ Each transition includes:
 - `next_observation`
 - `done`
 
-Generated data is saved in:
-- ✅ `dataset/replay_buffer.npz` – transition buffer
-- 📝 `dataset/metadata.txt` – episode stats
-- 📊 `dataset/reward_histogram.png` – episode reward distribution
+These transitions are saved into a compressed `.npz` buffer (`dataset/replay_buffer.npz`), which can later be loaded for training Conservative Q-Learning (CQL), TD3+BC, or BCQ agents.
+
+Additional outputs include:
+- ✅ Episode metadata (average reward, length, and total transitions) saved to `dataset/metadata.txt`
+- 📊 A histogram of reward distribution over episodes saved to `dataset/reward_histogram.png`
 
 To generate the dataset, run:
 
 ```bash
 python dataset/collect.py --episodes 100
-
 ```
+
+This will generate 10k+ transitions across 100 episodes using a random policy.
+
+---
 
 ## 📁 Project Structure
 
 ```bash
 offline-rl-agent/
 │
-├── env/                    # Custom Gym-like environment
+├── env/                    # Custom Gym environment (NeuroQuantEnv)
 │   └── neuroquant_env.py
 │
-├── dataset/                # Replay buffer + visualizations
-│   ├── collect.py
-│   ├── viz.py
-│   ├── replay_buffer.npz
+├── dataset/                # Replay buffer collection + visualizations
+│   ├── collect.py          # Random/scripted policy buffer generation
+│   ├── viz.py              # t-SNE, reward, and action plots
+│   ├── replay_buffer.npz   # (gitignored) Collected transitions
 │   ├── reward_histogram.png
 │   ├── metadata.txt
 │
-├── agent/                  # CQL training code
-│   ├── train.py
-│   └── cql.py
-│
-├── docs/                   # Visual assets
-│   ├── tsne_obs.png
-│   ├── action_distribution.png
-│   ├── episode_rewards.png
-│   ├── cql_training_losses.png
-│   └── replays/
-│       └── test_run.gif
+├── docs/
+│   └── plots/              # Visual outputs of dataset
+│       ├── tsne_obs.png
+│       ├── action_distribution.png
+│       └── episode_rewards.png
 │
 ├── .gitignore
 ├── README.md
-└── run_env_test.py
+└── run_env_test.py         # Debug script to manually interact with env
 ```
 
 ---
 
 ## 📊 Dataset Visualizations
 
-We visualize the replay buffer to verify coverage and diversity.
+We visualize the replay buffer to verify coverage and distribution:
 
-- 🌀 **t-SNE of State Vectors**  
-  ![t-SNE](docs/plots/tsne_obs.png)
+- 🌀 [t-SNE of Observations](docs/plots/tsne_obs.png): clusters state embeddings in 2D
+- 🎮 [Action Distribution](docs/plots/action_distribution.png): histogram over agent actions
+- 🎯 [Episode Reward Distribution](docs/plots/episode_rewards.png): how returns are spread across episodes
 
-- 🎮 **Action Distribution**  
-  ![Action Histogram](docs/plots/action_distribution.png)
-
-- 🎯 **Episode Reward Distribution**  
-  ![Rewards](docs/plots/episode_rewards.png)
-
-To generate these plots, run:
+These plots are generated via:
 
 ```bash
 python dataset/viz.py
-
 ```
 
 ---
 
-## 🏋️ Training the CQL Agent
-
-We train a Conservative Q-Learning (CQL) agent on the replay buffer using PyTorch.
-
-**Agent Highlights:**
-- Inputs: vector observations
-- Discrete 3-action space
-- 2-layer Q-network and policy
-- Losses:
-  - Bellman loss
-  - Conservative penalty
-  - (Optional) behavior cloning loss
-
-Run training:
+## 📦 Getting Started
 
 ```bash
-python agent/train.py
-```
-
-Logs print every 100 epochs with:
-- Bellman loss
-- Conservative loss
-- BC loss (if enabled)
-
----
-
-## 📉 Training Loss Visualization
-
-Below is the training loss of the CQL agent over 1000 epochs:
-
-![CQL Training Losses](docs/cql_training_losses.png)
-
-- **Bellman Loss**: TD error between predicted and target Q-values
-- **Conservative Loss**: Penalizes high Q-values for unseen actions
-- **Behavior Cloning Loss**: Aligns learned policy with dataset behavior
-
----
-
-## 🎥 Demos + GIFs
-
-The environment supports rendering full episodes as GIFs via `render_episode_gif()`.
-
-Example replay:
-
-![Sample Replay](docs/replays/test_run.gif)
-
----
-
-## 🛠️ Getting Started
-
-```bash
-# Clone and enter repo
+# 1. Clone and enter the repo
 git clone https://github.com/mansoor-mamnoon/offline-rl-agent.git
 cd offline-rl-agent
 
-# Set up venv
+# 2. Set up virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# Run environment manually
-python run_env_test.py
+# 4. Run environment manually
+python env/run_env_test.py
 
-# Collect data
+# 5. Collect dataset
 python dataset/collect.py --episodes 100
 
-# Visualize replay buffer
+# 6. Visualize dataset
 python dataset/viz.py
-
-# Train the agent
-python agent/train.py
 ```
 
 ---
 
+## Training the CQL Agent
 
+We implement a Conservative Q-Learning (CQL) agent using PyTorch. The agent is trained offline on a replay buffer generated from scripted or random policy.
+
+Key Features:
+- Vector observation space (4D: [agent_x, agent_y, goal_x, goal_y])
+- Discrete action space with 3 actions
+- Bellman loss, conservative loss, and optional behavior cloning (BC) loss
+
+Run training:
+```bash
+python agent/train.py
+'''
+Training logs print loss components every 100 epochs.
+
+
+---
+
+Let me know if you'd like to tune hyperparameters or visualize learning curves next!
+
+
+
+## 🧠 Training Loss Visualization
+
+Below is the training loss of the Conservative Q-Learning (CQL) agent across 1000 epochs:
+
+![CQL Training Losses](docs/cql_training_losses.png)
+
+- **Bellman Loss** measures TD error between predicted Q and target Q.
+- **Conservative Loss** regularizes Q-values to avoid overestimation.
+- **Behavior Cloning Loss** aligns the policy to dataset behavior.
+
+These curves help validate that learning is progressing smoothly.
+
+## Logging, Evaluation, and Checkpointing
+
+To monitor training progress and ensure the CQL agent is learning effectively, we implemented:
+
+### ✅ Features Added
+- 🔁 **Evaluation Loop**:
+  - Every 100 epochs, the agent is evaluated on a held-out batch of offline transitions.
+  - Evaluation metrics:
+    - **Policy Accuracy**: how often the agent matches actions from the dataset.
+    - **Average Q-Value**: the mean predicted return across sampled transitions.
+- 📉 **Loss Logging**:
+  - Training losses logged per epoch:
+    - Bellman loss (temporal difference)
+    - Conservative loss (Q regularization)
+    - Behavior cloning (BC) loss
+- 💾 **Checkpointing**:
+  - Automatically saves the `q_net` and `policy` when policy accuracy improves.
+  - Saved to: `checkpoints/best_q.pt` and `checkpoints/best_policy.pt`
+- 📊 **TensorBoard Integration**:
+  - Visualizations include:
+    - [`Eval/PolicyAccuracy`](http://localhost:6006/#scalars&tagFilter=PolicyAccuracy)
+    - [`Eval/AvgQ`](http://localhost:6006/#scalars&tagFilter=AvgQ)
+    - [`Loss/BC`](http://localhost:6006/#scalars&tagFilter=Loss%2FBC)
+    - [`Loss/Bellman`](http://localhost:6006/#scalars&tagFilter=Loss%2FBellman)
+
+To run TensorBoard:
+```bash
+tensorboard --logdir=logs
+```
+
+You can monitor live training and evaluation updates in your browser at:  
+👉 [http://localhost:6006](http://localhost:6006)
+
+### 📂 Files Modified
+- `agent/train.py`: Main training loop updated with:
+  - Evaluation every 100 epochs
+  - TensorBoard logging of loss and accuracy metrics
+  - Checkpoint saving logic for best-performing policy
+
+- `checkpoints/`: Directory created to store `.pt` model weights
+
+---
+
+Example visual output (after training):
+
+![Training Loss Curves](docs/cql_training_losses.png)
+
+---
+
+
+
+## 🎥 Demos + GIFs
+
+The environment supports saving full episodes as GIFs using the `render_episode_gif()` function.
+
+Sample run saved to `docs/replays/test_run.gif`:
+![Sample Replay](docs/replays/test_run.gif)
 
 
