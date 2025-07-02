@@ -12,3 +12,7 @@ __pycache__/
 
 # Virtual environment
 .venv/
+
+logs/
+checkpoints/
+
