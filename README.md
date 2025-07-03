@@ -91,9 +91,9 @@ offline-rl-agent/
 
 We visualize the replay buffer to verify coverage and distribution:
 
-- 🌀 [t-SNE of Observations](docs/plots/tsne_obs.png): clusters state embeddings in 2D
-- 🎮 [Action Distribution](docs/plots/action_distribution.png): histogram over agent actions
-- 🎯 [Episode Reward Distribution](docs/plots/episode_rewards.png): how returns are spread across episodes
+- 🌀 [t-SNE of Observations](offline-rl-agent/docs/plots/tsne_obs.png): clusters state embeddings in 2D
+- 🎮 [Action Distribution](doffline-rl-agent/ocs/plots/action_distribution.png): histogram over agent actions
+- 🎯 [Episode Reward Distribution](offline-rl-agent/docs/plots/episode_rewards.png): how returns are spread across episodes
 
 These plots are generated via:
 
@@ -155,7 +155,7 @@ Let me know if you'd like to tune hyperparameters or visualize learning curves n
 
 Below is the training loss of the Conservative Q-Learning (CQL) agent across 1000 epochs:
 
-![CQL Training Losses](docs/plots/cql_training_losses.png)
+![CQL Training Losses](offline-rl-agent/docs/plots/cql_training_losses.png)
 
 - **Bellman Loss** measures TD error between predicted Q and target Q.
 - **Conservative Loss** regularizes Q-values to avoid overestimation.
@@ -208,7 +208,7 @@ You can monitor live training and evaluation updates in your browser at:
 
 Example visual output (after training):
 
-![Training Loss Curves](docs/plots/cql_training_losses.png)  
+![Training Loss Curves](offline-rl-agent/docs/plots/cql_training_losses.png)  
 
 ---
 
