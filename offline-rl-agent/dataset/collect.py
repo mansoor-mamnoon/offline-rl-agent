@@ -66,7 +66,6 @@ def collect_data(num_episodes=100):
         while not done and ep_len < max_steps:
             action = scripted_policy(obs, env.agent_pos, env.agent_dir, [9, 9])
 
-
             next_obs, reward, done, _, _ = env.step(action)
 
             buffer["observations"].append(obs)
