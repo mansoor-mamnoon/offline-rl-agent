@@ -208,7 +208,7 @@ You can monitor live training and evaluation updates in your browser at:
 
 Example visual output (after training):
 
-![Training Loss Curves](docs/cql_training_losses.png)
+![Training Loss Curves](offline-rl-agent/docs/plots/cql_training_losses.png)  
 
 ---
 
