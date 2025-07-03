@@ -226,7 +226,7 @@ We implemented **model compression techniques** to reduce memory usage and infer
 
 Each point below represents a model version — plotted by reward and latency, with bubble size representing memory usage.
 
-![Compression Tradeoff](docs/plots/compression_tradeoff.png)
+![Compression Tradeoff](offline-rl-agent/docs/plots/compression_tradeoff.png)
 
 ### 💻 macOS Silicon (M1/M2) Warning
 
