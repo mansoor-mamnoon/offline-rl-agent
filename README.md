@@ -155,7 +155,7 @@ Let me know if you'd like to tune hyperparameters or visualize learning curves n
 
 Below is the training loss of the Conservative Q-Learning (CQL) agent across 1000 epochs:
 
-![CQL Training Losses](docs/cql_training_losses.png)
+![CQL Training Losses](docs/plots/cql_training_losses.png)
 
 - **Bellman Loss** measures TD error between predicted Q and target Q.
 - **Conservative Loss** regularizes Q-values to avoid overestimation.
