@@ -212,6 +212,75 @@ Example visual output (after training):
 
 ---
 
+## 🧠 Model Compression: Quantization + Pruning
+
+We implemented **model compression techniques** to reduce memory usage and inference latency of the offline RL agent without sacrificing reward. Two approaches were explored:
+
+### 🔧 Techniques Used
+1. **Static Quantization** using PyTorch's `torch.quantization` pipeline.
+2. **Structured Pruning** (via `torch.nn.utils.prune.ln_structured`) to remove 30–60% of neurons from linear layers.
+3. **Unstructured Pruning** (optional) to sparsify weights within layers for additional compression.
+4. **Fine-tuning** after pruning to recover performance.
+
+### 📈 Visualization of Tradeoffs
+
+Each point below represents a model version — plotted by reward and latency, with bubble size representing memory usage.
+
+![Compression Tradeoff](docs/plots/compression_tradeoff.png)
+
+### 💻 macOS Silicon (M1/M2) Warning
+
+Static quantization (using `torch.quantization.convert()`) is **not currently supported on macOS ARM (M1/M2 chips)**. You may see the following error:
+
+```
+NotImplementedError: Could not run 'quantized::linear' with arguments from the 'CPU' backend. This could be because the operator doesn't exist for this backend, or was omitted during the selective/custom build process (if using custom build). 'quantized::linear' is only available for these backends: [MPS, Meta, QuantizedCPU, BackendSelect, Python, FuncTorchDynamicLayerBackMode, Functionalize, Named, Conjugate, Negative, ZeroTensor, ADInplaceOrView, AutogradOther, AutogradCPU, AutogradCUDA, AutogradXLA, AutogradMPS, AutogradXPU, AutogradHPU, AutogradLazy, AutogradMTIA, AutogradMeta, Tracer, AutocastCPU, AutocastMTIA, AutocastXPU, AutocastMPS, AutocastCUDA, FuncTorchBatched, BatchedNestedTensor, FuncTorchVmapMode, Batched, VmapMode, FuncTorchGradWrapper, PythonTLSSnapshot, FuncTorchDynamicLayerFrontMode, PreDispatch, PythonDispatcher].
+```
+
+#### ✅ Fix: Use Dynamic Quantization on macOS
+
+To avoid this, switch to **dynamic quantization**, which works on macOS and still gives performance benefits on CPUs:
+
+```python
+from torch.quantization import quantize_dynamic
+
+quantized_model = quantize_dynamic(
+    PolicyNetwork(state_dim=4, action_dim=3),
+    {torch.nn.Linear},
+    dtype=torch.qint8
+)
+quantized_model.load_state_dict(torch.load("checkpoints/best_policy.pt"))
+```
+
+No need for `qconfig`, `prepare()`, or `convert()` — just quantize and run.
+
+🧪 **Results (Sample)**
+
+| Model                 | Reward | Latency (ms) | Memory (MB) |
+|----------------------|--------|--------------|-------------|
+| Original             | 8.30   | 0.23         | 341.86      |
+| Pruned               | 8.30   | 0.24         | 341.86      |
+| Quantized (Dynamic)  | ~8.30  | ~0.20        | ~330.00     |
+
+With higher pruning ratios or quantization + pruning combinations, further improvements can be achieved.
+
+📂 **Code Locations**
+- Compression logic: `agent/compress.py`
+- Evaluation and plotting: part of `compress.py` (runs automatically)
+- Trained models saved in: `checkpoints/`
+- Visualization saved to: `docs/plots/compression_tradeoff.png`
+
+### ▶️ Run it via:
+```bash
+python agent/compress.py
+```
+
+📌 **Next Steps**
+- Experiment with higher pruning ratios (e.g., 60–80%)
+- Test dynamic quantization on full deployment pipeline
+- Explore quantization-aware training for better accuracy
+
+
+
 
 
 ## 🎥 Demos + GIFs
