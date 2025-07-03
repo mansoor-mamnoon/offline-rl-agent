@@ -204,11 +204,6 @@ You can monitor live training and evaluation updates in your browser at:
 
 - `checkpoints/`: Directory created to store `.pt` model weights
 
----
-
-Example visual output (after training):
-
-![Training Loss Curves](docs/cql_training_losses.png)
 
 ---
 
