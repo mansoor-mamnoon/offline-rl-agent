@@ -91,9 +91,9 @@ offline-rl-agent/
 
 We visualize the replay buffer to verify coverage and distribution:
 
-- 🌀 [t-SNE of Observations](offline-rl-agent/docs/plots/tsne_obs.png): clusters state embeddings in 2D
-- 🎮 [Action Distribution](doffline-rl-agent/ocs/plots/action_distribution.png): histogram over agent actions
-- 🎯 [Episode Reward Distribution](offline-rl-agent/docs/plots/episode_rewards.png): how returns are spread across episodes
+- 🌀 [t-SNE of Observations](docs/plots/tsne_obs.png): clusters state embeddings in 2D
+- 🎮 [Action Distribution](docs/plots/action_distribution.png): histogram over agent actions
+- 🎯 [Episode Reward Distribution](docs/plots/episode_rewards.png): how returns are spread across episodes
 
 These plots are generated via:
 
@@ -155,7 +155,7 @@ Let me know if you'd like to tune hyperparameters or visualize learning curves n
 
 Below is the training loss of the Conservative Q-Learning (CQL) agent across 1000 epochs:
 
-![CQL Training Losses](offline-rl-agent/docs/cql_training_losses.png)
+![CQL Training Losses](docs/cql_training_losses.png)
 
 - **Bellman Loss** measures TD error between predicted Q and target Q.
 - **Conservative Loss** regularizes Q-values to avoid overestimation.
@@ -208,7 +208,7 @@ You can monitor live training and evaluation updates in your browser at:
 
 Example visual output (after training):
 
-![Training Loss Curves](offline-rl-agent/docs/cql_training_losses.png)  
+![Training Loss Curves](docs/cql_training_losses.png)
 
 ---
 
@@ -226,7 +226,7 @@ We implemented **model compression techniques** to reduce memory usage and infer
 
 Each point below represents a model version — plotted by reward and latency, with bubble size representing memory usage.
 
-![Compression Tradeoff](offline-rl-agent/docs/plots/compression_tradeoff.png)
+![Compression Tradeoff](docs/plots/compression_tradeoff.png)
 
 ### 💻 macOS Silicon (M1/M2) Warning
 
@@ -273,6 +273,30 @@ With higher pruning ratios or quantization + pruning combinations, further impro
 ```bash
 python agent/compress.py
 ```
+
+## 🔍 Distillation-Based Compression
+
+We implement knowledge distillation to compress a large policy model (BigMLP) into a smaller student model (SmallMLP). The student is trained on soft labels from the teacher’s output logits using KL divergence loss.
+
+### 📈 Distillation Loss Curve
+
+![Distillation Loss](logs/distill_loss_plot.png)
+
+> KL Divergence between teacher and student softmax outputs across training epochs.
+
+### 🎯 Final Reward of Student Policy
+
+![Student Reward](logs/student_reward_plot.png)
+
+> Average reward over 10 episodes after distillation. Evaluation performed using `NeuroQuantEnv`.
+
+---
+
+### 📁 Outputs
+- Trained student saved at: `checkpoints/small_mlp_distilled.pt`
+- Loss log: `logs/distill_loss.log`
+- Reward log: `logs/student_reward.log`
+
 
 📌 **Next Steps**
 - Experiment with higher pruning ratios (e.g., 60–80%)
