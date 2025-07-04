@@ -293,10 +293,52 @@ We implement knowledge distillation to compress a large policy model (BigMLP) in
 - Reward log: `logs/student_reward.log`
 
 
-📌 **Next Steps**
-- Experiment with higher pruning ratios (e.g., 60–80%)
-- Test dynamic quantization on full deployment pipeline
-- Explore quantization-aware training for better accuracy
+We built a real-time inference loop to benchmark the performance of compressed models in a live environment. The goal was to deploy a distilled model (`SmallMLP`) and verify whether it could sustain high-speed, low-latency decision-making under realistic constraints.
+
+### 🎯 Objectives
+- Load a compressed, lightweight model (`small_mlp_distilled.pt`)
+- Step through `NeuroQuantEnv` in a real-time loop (≤ 100ms per frame)
+- Log per-frame:
+  - ✅ Inference latency (ms)
+  - ✅ Memory usage (MB)
+  - ✅ Actions taken
+- Display live FPS and latency in terminal
+- Save and plot performance metrics
+
+### 📈 Key Results
+- 🧠 Model: `SmallMLP` distilled from `BigMLP`
+- 🚀 Average Latency: **1.08 ms**
+- 🎞️ Average FPS: **929.04**
+- 🧠 Memory Usage: **~194.55 MB**
+
+### 🖥️ Sample Output
+```
+🎮 Starting real-time inference loop...
+[Frame 1] Latency: 1.15 ms | FPS: 869.19 | Mem: 194.42 MB | Action: 2
+[Frame 10] Latency: 1.05 ms | FPS: 950.23 | Mem: 194.55 MB | Action: 0
+...
+🎯 Real-Time Inference Complete
+🕒 Total Time: 1.88 s
+📈 Avg Latency: 1.08 ms | Avg FPS: 929.04
+```
+
+### 📊 Real-Time Inference Visualizations
+
+<img src="docs/plots/day11_latency.png" width="48%" />
+<img src="docs/plots/day11_fps.png" width="48%" />
+
+- 🔁 Each point = one environment step
+- 📉 Latency remained stable across steps (~1ms)
+- 🎯 FPS consistently exceeded 900
+
+### 📂 Files Involved
+```
+inference/run_realtime_inference.py   # Real-time engine
+checkpoints/small_mlp_distilled.pt    # Compressed model
+logs/day11_metrics.csv                # Per-frame metrics
+docs/plots/day11_latency.png          # Latency graph
+docs/plots/day11_fps.png              # FPS graph
+```
 
 
 
