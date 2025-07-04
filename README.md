@@ -324,8 +324,8 @@ We built a real-time inference loop to benchmark the performance of compressed m
 
 ### 📊 Real-Time Inference Visualizations
 
-<img src="docs/plots/day11_latency.png" width="48%" />
-<img src="docs/plots/day11_fps.png" width="48%" />
+<img src="day11_latency.png" width="48%" />
+<img src="day11_fps.png" width="48%" />
 
 - 🔁 Each point = one environment step
 - 📉 Latency remained stable across steps (~1ms)
