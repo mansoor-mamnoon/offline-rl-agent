@@ -340,7 +340,34 @@ docs/plots/day11_latency.png          # Latency graph
 docs/plots/day11_fps.png              # FPS graph
 ```
 
+We upgraded the inference engine to simulate a realistic deployment environment where latency spikes trigger automatic shutdown, and all runtime metrics are logged for post-analysis.
 
+### 🎯 Objectives
+- ❌ Shutdown if inference latency > **150 ms**
+- ✅ Log each frame with:
+  - Timestamp
+  - Inference Latency
+  - Memory Usage
+  - Cumulative Reward
+- ✅ Write to: `results/session_X.csv`
+
+### 📊 Logs Visualized
+
+<img src="docs/plots/day12_latency.png" width="48%" />
+<img src="docs/plots/day12_reward.png" width="48%" />
+
+- 🔁 Each point = 1 environment step
+- 🚨 Inference aborted if latency >150ms
+- 🧠 All inference logs saved for replayability
+
+### 📂 Files Involved
+```
+inference/run_realtime_inference.py     # Real-time agent w/ shutdown & logging
+results/session_X.csv                   # Per-frame logs (auto-numbered)
+scripts/plot_day12_session.py           # Plotting script
+docs/plots/day12_latency.png            # Per-frame latency plot
+docs/plots/day12_reward.png             # Cumulative reward plot
+```
 
 
 
