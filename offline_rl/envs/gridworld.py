@@ -98,7 +98,10 @@ class GridWorld:
 
     def render(self) -> np.ndarray:
         cell_size = 20
-        img = np.ones((self.grid_size * cell_size, self.grid_size * cell_size, 3), dtype=np.uint8) * 220
+        img = (
+            np.ones((self.grid_size * cell_size, self.grid_size * cell_size, 3), dtype=np.uint8)
+            * 220
+        )
 
         for r in range(self.grid_size):
             for c in range(self.grid_size):
@@ -122,7 +125,9 @@ class GridWorld:
 
         return img
 
-    def generate_dataset(self, policy, n_episodes: int = 1000, save_path: Optional[str] = None) -> dict:
+    def generate_dataset(
+        self, policy, n_episodes: int = 1000, save_path: Optional[str] = None
+    ) -> dict:
         observations = []
         actions = []
         rewards = []

@@ -35,6 +35,7 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
     # Create environment
     if env == "traffic":
         from offline_rl.envs.traffic_routing import TrafficRoutingEnv, load_aware_policy
+
         environment = TrafficRoutingEnv(seed=seed)
         policy_fn = load_aware_policy
         obs_dim = 32
@@ -42,6 +43,7 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
         action_space = "continuous"
     else:
         from offline_rl.envs.gridworld import GridWorld, GridWorldConfig, mixed_policy
+
         cfg = GridWorldConfig()
         environment = GridWorld(cfg)
         policy_fn = mixed_policy
@@ -55,6 +57,7 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
         raw_dataset = environment.generate_dataset(policy_fn, n_episodes=n_dataset_episodes)
     else:
         from offline_rl.datasets.loader import load_dataset
+
         click.echo(f"[orl] Loading dataset from {dataset}")
         raw_dataset = load_dataset(dataset)
 
@@ -63,16 +66,19 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
     # Build algorithm config
     if algo == "bc":
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
+
         algo_cfg = BCConfig(n_epochs=n_train_epochs, action_space=action_space)
         algorithm = BehaviorCloning(obs_dim, act_dim, algo_cfg)
     else:
         click.echo(f"[orl] Algorithm '{algo}' not yet implemented, using BC fallback.")
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
+
         algo_cfg = BCConfig(n_epochs=n_train_epochs, action_space=action_space)
         algorithm = BehaviorCloning(obs_dim, act_dim, algo_cfg)
 
     # Set up logger
     from offline_rl.training.logger import Logger
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = str(Path(out) / f"{algo}_{env}_{timestamp}")
     logger = Logger(run_dir)
@@ -88,6 +94,7 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
 
     # Train
     from offline_rl.training.trainer import BCTrainer
+
     trainer = BCTrainer(algorithm, raw_dataset, algo_cfg, logger)
     results = trainer.train()
 

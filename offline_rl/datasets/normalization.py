@@ -70,9 +70,7 @@ def normalize_dataset(dataset: dict) -> tuple:
     norm_dataset["next_observations"] = (
         (dataset["next_observations"].astype(np.float64) - obs_mean) / obs_std
     ).astype(np.float32)
-    norm_dataset["rewards"] = (
-        (rewards - reward_mean) / reward_std
-    ).astype(np.float32)
+    norm_dataset["rewards"] = ((rewards - reward_mean) / reward_std).astype(np.float32)
 
     return norm_dataset, stats
 

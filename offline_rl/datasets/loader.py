@@ -4,7 +4,6 @@ import numpy as np
 import h5py
 from typing import Optional
 
-
 REQUIRED_KEYS = {"observations", "actions", "rewards", "next_observations", "dones"}
 
 
@@ -52,9 +51,7 @@ def validate_dataset(dataset: dict) -> bool:
     # Check all arrays have same length
     for key in REQUIRED_KEYS:
         if len(dataset[key]) != n:
-            raise ValueError(
-                f"Key '{key}' has length {len(dataset[key])}, expected {n}"
-            )
+            raise ValueError(f"Key '{key}' has length {len(dataset[key])}, expected {n}")
 
     # Check for NaN/inf
     for key in ["observations", "rewards", "next_observations"]:

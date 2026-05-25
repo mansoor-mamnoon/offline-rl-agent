@@ -31,9 +31,11 @@ class Logger:
 
         # Save git commit
         try:
-            commit = subprocess.check_output(
-                ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
-            ).decode().strip()
+            commit = (
+                subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL)
+                .decode()
+                .strip()
+            )
         except Exception:
             commit = "unknown"
         (self.run_dir / "git_commit.txt").write_text(commit)
@@ -49,11 +51,13 @@ class Logger:
         """Save config as YAML."""
         try:
             import yaml
+
             config_path = self.run_dir / "config.yaml"
             with open(config_path, "w") as f:
                 yaml.dump(config, f, default_flow_style=False)
         except ImportError:
             import json
+
             config_path = self.run_dir / "config.json"
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
@@ -71,4 +75,10 @@ class Logger:
                     table.add_row(k, str(v))
             self.console.print(table)
         else:
-            print(f"Step {self._step}: " + ", ".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" for k, v in metrics.items()))
+            print(
+                f"Step {self._step}: "
+                + ", ".join(
+                    f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}"
+                    for k, v in metrics.items()
+                )
+            )

@@ -8,7 +8,6 @@ import numpy as np
 import h5py
 from typing import Optional
 
-
 # SLO thresholds
 LATENCY_THRESHOLD_MS = 200.0
 ERROR_THRESHOLD = 0.01
@@ -105,9 +104,12 @@ class TrafficRoutingEnv:
         self._time_of_day_cos = np.cos(2 * np.pi * hour / 24.0)
 
         # Update global request rate with diurnal pattern
-        base_rate = 0.5 + 0.3 * (
-            np.sin(2 * np.pi * (hour - 9) / 24.0) + np.sin(2 * np.pi * (hour - 18) / 24.0)
-        ) / 2.0
+        base_rate = (
+            0.5
+            + 0.3
+            * (np.sin(2 * np.pi * (hour - 9) / 24.0) + np.sin(2 * np.pi * (hour - 18) / 24.0))
+            / 2.0
+        )
         base_rate = float(np.clip(base_rate, 0.1, 1.0))
 
         # Stress test: inject 3x spike at midpoint
@@ -137,16 +139,18 @@ class TrafficRoutingEnv:
         # Update load: load = prior_load * decay + route_frac * global_rate
         decay = 0.8
         incoming = route_fracs * self._global_request_rate * (1.0 - shed_frac)
-        self._service_load = (decay * self._service_load + (1 - decay) * incoming).astype(np.float32)
+        self._service_load = (decay * self._service_load + (1 - decay) * incoming).astype(
+            np.float32
+        )
         self._service_load = np.clip(self._service_load, 0.0, 1.0)
 
         # Update request rate
-        self._request_rate = (0.9 * self._request_rate + 0.1 * route_fracs * self._global_request_rate).astype(np.float32)
+        self._request_rate = (
+            0.9 * self._request_rate + 0.1 * route_fracs * self._global_request_rate
+        ).astype(np.float32)
 
         # Update queue depth
-        self._queue_depth = np.clip(
-            self._service_load - 0.7, 0.0, None
-        ).astype(np.float32)
+        self._queue_depth = np.clip(self._service_load - 0.7, 0.0, None).astype(np.float32)
 
         # CPU proportional to load
         self._cpu_usage = np.clip(
@@ -154,9 +158,9 @@ class TrafficRoutingEnv:
         ).astype(np.float32)
 
         # Memory usage
-        self._memory_usage_global = float(np.clip(
-            0.4 + 0.3 * self._service_load.mean() + self.rng.normal(0, 0.01), 0.0, 1.0
-        ))
+        self._memory_usage_global = float(
+            np.clip(0.4 + 0.3 * self._service_load.mean() + self.rng.normal(0, 0.01), 0.0, 1.0)
+        )
 
         # Compute latency: sigmoid spike above 0.7 load
         for b in range(self.N_BACKENDS):
@@ -227,21 +231,23 @@ class TrafficRoutingEnv:
             self._time_of_day_sin = 0.0
             self._time_of_day_cos = 1.0
 
-        state = np.concatenate([
-            self._service_load,                                          # 3
-            self._request_rate,                                          # 3
-            self._p95_latency / 1000.0,                                  # 3 (ms/1000)
-            self._error_rate,                                            # 3
-            self._region_health,                                         # 3
-            self._queue_depth,                                           # 3
-            self._prior_route_alloc,                                     # 3
-            [self._global_request_rate],                                 # 1
-            [self._time_of_day_sin, self._time_of_day_cos],             # 2
-            self._incident_active.astype(np.float32),                   # 3
-            [self._rolling_slo_violation_rate],                         # 1
-            self._cpu_usage,                                             # 3
-            [self._memory_usage_global],                                 # 1
-        ]).astype(np.float32)
+        state = np.concatenate(
+            [
+                self._service_load,  # 3
+                self._request_rate,  # 3
+                self._p95_latency / 1000.0,  # 3 (ms/1000)
+                self._error_rate,  # 3
+                self._region_health,  # 3
+                self._queue_depth,  # 3
+                self._prior_route_alloc,  # 3
+                [self._global_request_rate],  # 1
+                [self._time_of_day_sin, self._time_of_day_cos],  # 2
+                self._incident_active.astype(np.float32),  # 3
+                [self._rolling_slo_violation_rate],  # 1
+                self._cpu_usage,  # 3
+                [self._memory_usage_global],  # 1
+            ]
+        ).astype(np.float32)
 
         assert state.shape == (32,), f"State shape is {state.shape}, expected (32,)"
         # Add small Gaussian noise
@@ -294,12 +300,14 @@ class TrafficRoutingEnv:
 
                 obs = next_obs
 
-            episode_metadata.append({
-                "episode_id": ep,
-                "total_reward": ep_reward,
-                "slo_violations": ep_slo_violations,
-                "incident_count": ep_incident_count,
-            })
+            episode_metadata.append(
+                {
+                    "episode_id": ep,
+                    "total_reward": ep_reward,
+                    "slo_violations": ep_slo_violations,
+                    "incident_count": ep_incident_count,
+                }
+            )
 
         if max_steps is not None:
             self.max_steps = orig_max
