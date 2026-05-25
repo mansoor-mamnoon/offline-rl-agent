@@ -2,8 +2,6 @@
 
 > Train, evaluate, and stress-test offline RL agents from static logs under safety constraints.
 
-![CI](https://github.com/muneermamnoon/offline-rl-agent/actions/workflows/ci.yml/badge.svg)
-
 ## Why this exists
 
 Offline reinforcement learning promises to extract policies from historical data without interacting with a live environment — crucial for safety-critical systems where online exploration is prohibitively expensive or dangerous. But the field has a dirty secret: standard offline RL papers optimize for expected return on benchmark datasets, ignoring whether the learned policy will actually be safe to deploy.
