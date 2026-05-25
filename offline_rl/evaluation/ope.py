@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 import numpy as np
+import torch
 
 
 @dataclass
@@ -243,3 +244,96 @@ class OPEEvaluator:
             lp = -0.5 * (diff**2 / 0.09).sum(axis=1) - act_dim * np.log(0.3 * np.sqrt(2 * np.pi))
             log_probs.append(lp)
         return np.concatenate(log_probs)
+
+
+class ModelBasedEstimator:
+    """Learn transition model, estimate return via short rollouts."""
+
+    def __init__(
+        self,
+        obs_dim: int,
+        act_dim: int,
+        hidden_dims: Optional[List[int]] = None,
+        device: str = "cpu",
+    ):
+        if hidden_dims is None:
+            hidden_dims = [256, 256]
+        from offline_rl.models.mlp import MLP
+
+        self.device = device
+        self.obs_dim = obs_dim
+        self.transition_model = MLP(obs_dim + act_dim, obs_dim, hidden_dims).to(device)
+        self.reward_model = MLP(obs_dim + act_dim, 1, hidden_dims).to(device)
+        self.optimizer = torch.optim.Adam(
+            list(self.transition_model.parameters())
+            + list(self.reward_model.parameters()),
+            lr=1e-3,
+        )
+        self._fitted = False
+
+    def fit_transition_model(
+        self, dataset: dict, n_epochs: int = 10, batch_size: int = 256
+    ) -> list:
+        """Fit dynamics and reward models on dataset."""
+        import torch.nn.functional as F
+
+        obs = torch.FloatTensor(dataset["observations"]).to(self.device)
+        actions = torch.FloatTensor(dataset["actions"]).to(self.device)
+        next_obs = torch.FloatTensor(dataset["next_observations"]).to(self.device)
+        rewards = (
+            torch.FloatTensor(dataset["rewards"]).to(self.device).unsqueeze(-1)
+        )
+
+        sa = torch.cat([obs, actions], dim=-1)
+        N = len(obs)
+        losses = []
+
+        for epoch in range(n_epochs):
+            idx = torch.randperm(N)[:batch_size]
+            pred_next = self.transition_model(sa[idx])
+            pred_r = self.reward_model(sa[idx])
+            loss = F.mse_loss(pred_next, next_obs[idx]) + F.mse_loss(
+                pred_r, rewards[idx]
+            )
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            losses.append(loss.item())
+
+        self._fitted = True
+        return losses
+
+    def estimate(
+        self,
+        policy,
+        n_rollouts: int = 100,
+        horizon: int = 20,
+        discount: float = 0.99,
+    ) -> float:
+        """Estimate policy return via model-based rollouts."""
+        if not self._fitted:
+            raise RuntimeError("Call fit_transition_model first")
+
+        returns = []
+        for _ in range(n_rollouts):
+            obs = torch.FloatTensor(
+                np.random.randn(self.obs_dim).astype(np.float32)
+            ).to(self.device)
+            total_r = 0.0
+            gamma = 1.0
+            for t in range(horizon):
+                obs_np = obs.cpu().numpy()
+                if hasattr(policy, "select_action"):
+                    action = policy.select_action(obs_np)
+                else:
+                    action = policy(obs_np)
+                action_t = torch.FloatTensor(action).to(self.device)
+                sa = torch.cat([obs, action_t])
+                with torch.no_grad():
+                    next_obs = self.transition_model(sa.unsqueeze(0)).squeeze(0)
+                    reward = self.reward_model(sa.unsqueeze(0)).item()
+                total_r += gamma * reward
+                gamma *= discount
+                obs = next_obs
+            returns.append(total_r)
+        return float(np.mean(returns))
