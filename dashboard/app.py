@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-pages = ["Dataset Diagnostics", "Training Runs", "Policy Comparison"]
+pages = ["Dataset Diagnostics", "Training Runs", "Policy Comparison", "Failure Explorer"]
 page = st.sidebar.selectbox("Page", pages)
 
 # ─── Dataset Diagnostics ──────────────────────────────────────────────────────
@@ -305,3 +305,21 @@ elif page == "Policy Comparison":
             st.info("No runs found. Train policies first.")
     else:
         st.info("No runs or benchmark data found.")
+
+# ─── Failure Explorer ─────────────────────────────────────────────────────────
+
+elif page == "Failure Explorer":
+    st.title("Failure Explorer")
+    st.info("Load a checkpoint and dataset to explore policy failures.")
+
+    col1, col2 = st.columns(2)
+    checkpoint_path = col1.text_input("Checkpoint path", "runs/latest/checkpoint.pt")
+    dataset_path = col2.text_input("Dataset path", "")
+    n_episodes = st.slider("Episodes to collect", 10, 100, 20)
+
+    if st.button("Run Failure Analysis") and checkpoint_path:
+        try:
+            # This is a UI placeholder - full implementation requires checkpoint loading
+            st.info("Failure analysis requires a running environment. Feature available via CLI.")
+        except Exception as e:
+            st.error(f"Error: {e}")
