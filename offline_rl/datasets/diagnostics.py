@@ -29,15 +29,9 @@ class DiagnosticsReport:
     support_mismatch_risk: float
 
     def to_dict(self) -> dict:
-        d = {
-            k: v
-            for k, v in self.__dict__.items()
-            if not isinstance(v, np.ndarray)
-        }
+        d = {k: v for k, v in self.__dict__.items() if not isinstance(v, np.ndarray)}
         d["state_pca_points"] = (
-            self.state_pca_points.tolist()
-            if self.state_pca_points is not None
-            else None
+            self.state_pca_points.tolist() if self.state_pca_points is not None else None
         )
         return d
 
@@ -89,9 +83,7 @@ class DatasetDiagnostics:
         self.actions = dataset["actions"]
         self.rewards = dataset["rewards"].flatten()
         self.dones = dataset["dones"].flatten()
-        self.episode_ids = dataset.get(
-            "episode_ids", np.zeros(len(self.rewards), dtype=np.int64)
-        )
+        self.episode_ids = dataset.get("episode_ids", np.zeros(len(self.rewards), dtype=np.int64))
 
         # Ensure actions are 2D
         if self.actions.ndim == 1:
@@ -134,7 +126,7 @@ class DatasetDiagnostics:
             cell = tuple(int(np.clip(v * bins, 0, bins - 1)) for v in row)
             occupied.add(cell)
 
-        total = bins ** n_dims
+        total = bins**n_dims
         return min(1.0, len(occupied) / total)
 
     def compute_behavior_entropy(self) -> float:
@@ -235,9 +227,7 @@ class DatasetDiagnostics:
                 "coverage": min(1.0, coverage),
                 "histogram": np.histogram(a, bins=20)[0].tolist(),
             }
-        overall = float(
-            np.mean([v["coverage"] for k, v in result.items() if isinstance(v, dict)])
-        )
+        overall = float(np.mean([v["coverage"] for k, v in result.items() if isinstance(v, dict)]))
         result["overall_coverage"] = overall
         return result
 

@@ -15,8 +15,8 @@ from offline_rl.models.critics import DoubleQNetwork, ValueNetwork
 @dataclass
 class IQLConfig:
     hidden_dims: List[int] = field(default_factory=lambda: [256, 256])
-    tau: float = 0.7       # expectile for value loss
-    beta: float = 3.0      # advantage temperature for policy loss
+    tau: float = 0.7  # expectile for value loss
+    beta: float = 3.0  # advantage temperature for policy loss
     discount: float = 0.99
     lr: float = 3e-4
     tau_soft: float = 0.005

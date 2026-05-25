@@ -23,6 +23,7 @@ def diagnose(dataset, out):
         from rich.console import Console
         from rich.table import Table
         from rich.panel import Panel
+
         _rich = True
     except ImportError:
         _rich = False
@@ -40,8 +41,12 @@ def diagnose(dataset, out):
 
     if _rich:
         console = Console()
-        table = Table(title=f"Dataset: {dataset_path.name}", show_header=True,
-                      header_style="bold cyan", expand=False)
+        table = Table(
+            title=f"Dataset: {dataset_path.name}",
+            show_header=True,
+            header_style="bold cyan",
+            expand=False,
+        )
         table.add_column("Metric", style="dim", width=28)
         table.add_column("Value")
 
@@ -84,6 +89,7 @@ def diagnose(dataset, out):
 
     if out:
         import json
+
         out_path = Path(out)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with open(out_path, "w") as f:
@@ -144,24 +150,28 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
     if algo == "bc":
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
         from offline_rl.training.trainer import BCTrainer
+
         algo_cfg = BCConfig(n_epochs=n_train_epochs, action_space=action_space)
         algorithm = BehaviorCloning(obs_dim, act_dim, algo_cfg)
         TrainerClass = BCTrainer
     elif algo == "cql":
         from offline_rl.algorithms.cql import CQL, CQLConfig
         from offline_rl.training.trainer import CQLTrainer
+
         algo_cfg = CQLConfig(n_epochs=n_train_epochs)
         algorithm = CQL(obs_dim, act_dim, algo_cfg)
         TrainerClass = CQLTrainer
     elif algo == "iql":
         from offline_rl.algorithms.iql import IQL, IQLConfig
         from offline_rl.training.trainer import IQLTrainer
+
         algo_cfg = IQLConfig(n_epochs=n_train_epochs)
         algorithm = IQL(obs_dim, act_dim, algo_cfg)
         TrainerClass = IQLTrainer
     elif algo == "td3bc":
         from offline_rl.algorithms.td3_bc import TD3BC, TD3BCConfig
         from offline_rl.training.trainer import TD3BCTrainer
+
         algo_cfg = TD3BCConfig(n_epochs=n_train_epochs)
         algorithm = TD3BC(obs_dim, act_dim, algo_cfg)
         TrainerClass = TD3BCTrainer
@@ -169,6 +179,7 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
         click.echo(f"[orl] Algorithm '{algo}' not yet implemented, using BC fallback.")
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
         from offline_rl.training.trainer import BCTrainer
+
         algo_cfg = BCConfig(n_epochs=n_train_epochs, action_space=action_space)
         algorithm = BehaviorCloning(obs_dim, act_dim, algo_cfg)
         TrainerClass = BCTrainer
@@ -218,15 +229,19 @@ def evaluate(checkpoint, dataset, ope, algo):
     # Load policy
     if algo == "bc":
         from offline_rl.algorithms.bc import BehaviorCloning
+
         policy = BehaviorCloning.load(checkpoint)
     elif algo == "cql":
         from offline_rl.algorithms.cql import CQL
+
         policy = CQL.load(checkpoint)
     elif algo == "iql":
         from offline_rl.algorithms.iql import IQL
+
         policy = IQL.load(checkpoint)
     elif algo == "td3bc":
         from offline_rl.algorithms.td3_bc import TD3BC
+
         policy = TD3BC.load(checkpoint)
     else:
         raise click.BadParameter(f"Unknown algo: {algo}")
@@ -237,6 +252,7 @@ def evaluate(checkpoint, dataset, ope, algo):
     try:
         from rich.console import Console
         from rich.table import Table
+
         console = Console()
         table = Table(title=f"OPE Results: {algo}", header_style="bold cyan")
         table.add_column("Method", style="dim")
@@ -263,8 +279,8 @@ def dashboard(port):
     """Launch the OfflineRL-Lab Streamlit dashboard."""
     import subprocess
     import sys
+
     dashboard_path = Path(__file__).parent.parent / "dashboard" / "app.py"
     subprocess.run(
-        [sys.executable, "-m", "streamlit", "run", str(dashboard_path),
-         "--server.port", str(port)]
+        [sys.executable, "-m", "streamlit", "run", str(dashboard_path), "--server.port", str(port)]
     )

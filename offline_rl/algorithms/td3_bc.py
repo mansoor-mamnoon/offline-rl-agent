@@ -17,7 +17,7 @@ from offline_rl.models.critics import DoubleQNetwork
 class TD3BCConfig:
     hidden_dims: List[int] = field(default_factory=lambda: [256, 256])
     lr: float = 3e-4
-    alpha: float = 2.5       # BC regularization weight
+    alpha: float = 2.5  # BC regularization weight
     tau: float = 0.005
     discount: float = 0.99
     policy_noise: float = 0.2
@@ -49,9 +49,7 @@ class TD3BC:
         self.act_dim = act_dim
 
         # Deterministic policy
-        self.actor = MLP(
-            obs_dim, act_dim, config.hidden_dims, output_activation="tanh"
-        ).to(device)
+        self.actor = MLP(obs_dim, act_dim, config.hidden_dims, output_activation="tanh").to(device)
         self.actor_target = copy.deepcopy(self.actor)
 
         # Q networks
@@ -79,9 +77,9 @@ class TD3BC:
 
         # ── Q loss ────────────────────────────────────────────────────────────
         with torch.no_grad():
-            noise = (
-                torch.randn_like(actions) * self.config.policy_noise
-            ).clamp(-self.config.noise_clip, self.config.noise_clip)
+            noise = (torch.randn_like(actions) * self.config.policy_noise).clamp(
+                -self.config.noise_clip, self.config.noise_clip
+            )
             next_actions = (self.actor_target(next_obs) + noise).clamp(-1.0, 1.0)
 
             q1_next, q2_next = self.qf_target(next_obs, next_actions)

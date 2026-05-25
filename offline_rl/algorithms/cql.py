@@ -135,21 +135,15 @@ class CQL:
             .to(self.device)
         )
         obs_repeated = (
-            obs.unsqueeze(1)
-            .repeat(1, self.config.n_random_actions, 1)
-            .view(-1, self.obs_dim)
+            obs.unsqueeze(1).repeat(1, self.config.n_random_actions, 1).view(-1, self.obs_dim)
         )
         next_obs_repeated = (
-            next_obs.unsqueeze(1)
-            .repeat(1, self.config.n_random_actions, 1)
-            .view(-1, self.obs_dim)
+            next_obs.unsqueeze(1).repeat(1, self.config.n_random_actions, 1).view(-1, self.obs_dim)
         )
 
         with torch.no_grad():
             policy_actions, policy_log_pi = self._sample_policy_actions(obs_repeated)
-            next_policy_actions, next_policy_log_pi = self._sample_policy_actions(
-                next_obs_repeated
-            )
+            next_policy_actions, next_policy_log_pi = self._sample_policy_actions(next_obs_repeated)
 
         q1_rand, q2_rand = self.qf(obs_repeated, random_actions)
         q1_policy, q2_policy = self.qf(obs_repeated, policy_actions)
@@ -158,7 +152,7 @@ class CQL:
         # log pi for importance weighting
         random_log_pi = torch.log(
             torch.ones(batch_size * self.config.n_random_actions, 1, device=self.device)
-            / (2 ** self.act_dim)
+            / (2**self.act_dim)
         )
 
         # reshape for cat
@@ -194,10 +188,7 @@ class CQL:
 
         # Auto-tune alpha
         if self.config.alpha_auto:
-            alpha_loss = -(
-                self.log_alpha
-                * (cql_penalty - self.config.target_action_gap).detach()
-            )
+            alpha_loss = -(self.log_alpha * (cql_penalty - self.config.target_action_gap).detach())
             self.alpha_optimizer.zero_grad()
             alpha_loss.backward()
             self.alpha_optimizer.step()
@@ -219,9 +210,7 @@ class CQL:
         self.policy_optimizer.step()
 
         # Temperature loss
-        temp_loss = -(
-            self.log_temp * (log_pi.squeeze(1) + self.act_dim).detach()
-        ).mean()
+        temp_loss = -(self.log_temp * (log_pi.squeeze(1) + self.act_dim).detach()).mean()
         self.temp_optimizer.zero_grad()
         temp_loss.backward()
         self.temp_optimizer.step()

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Run tests
+        run: pytest tests/ -x --timeout=60
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Run smoke test (BC)
+        run: python scripts/train.py --algo bc --env traffic --n-dataset-episodes 50 --n-train-epochs 3 --seed 0
+      - name: Run smoke test (CQL)
+        run: python scripts/train.py --algo cql --env traffic --n-dataset-episodes 50 --n-train-epochs 3 --seed 0
+      - name: Run smoke test (IQL)
+        run: python scripts/train.py --algo iql --env traffic --n-dataset-episodes 50 --n-train-epochs 3 --seed 0
+      - name: Run smoke test (TD3BC)
+        run: python scripts/train.py --algo td3bc --env traffic --n-dataset-episodes 50 --n-train-epochs 3 --seed 0

@@ -10,18 +10,14 @@ import numpy as np
 class SafetyReport:
     mean_return: float
     std_return: float
-    worst_5pct_return: float     # CVaR at 5%
+    worst_5pct_return: float  # CVaR at 5%
     slo_violation_rate: float
     ood_action_rate: float
     catastrophic_failure_rate: float
     episode_returns: np.ndarray
 
     def to_dict(self) -> dict:
-        d = {
-            k: v
-            for k, v in self.__dict__.items()
-            if not isinstance(v, np.ndarray)
-        }
+        d = {k: v for k, v in self.__dict__.items() if not isinstance(v, np.ndarray)}
         d["episode_returns"] = self.episode_returns.tolist()
         return d
 
@@ -81,10 +77,7 @@ class SafetyEvaluator:
                 action = self.policy.select_action(obs)
 
                 # Check support
-                if (
-                    self.support_estimator is not None
-                    and self.support_estimator._fitted
-                ):
+                if self.support_estimator is not None and self.support_estimator._fitted:
                     score = self.support_estimator.support_score(obs, action)
                     if score < self.ood_threshold:
                         ep_ood += 1

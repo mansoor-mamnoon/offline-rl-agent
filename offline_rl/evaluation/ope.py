@@ -41,9 +41,7 @@ class ImportanceSampling:
         max_ratio: float = 20.0,
     ) -> float:
         rewards = dataset["rewards"].flatten()
-        ratios = np.exp(
-            np.clip(eval_log_probs - behavior_log_probs, -max_ratio, max_ratio)
-        )
+        ratios = np.exp(np.clip(eval_log_probs - behavior_log_probs, -max_ratio, max_ratio))
         unique_eps = np.unique(episode_ids)
         ep_values = []
         for ep_id in unique_eps:
@@ -121,9 +119,7 @@ class DoublyRobust:
         return float((q_function + wis_est) / 2)
 
 
-def bootstrap_confidence_intervals(
-    data: list, n_bootstrap: int = 1000, ci: float = 0.95
-) -> tuple:
+def bootstrap_confidence_intervals(data: list, n_bootstrap: int = 1000, ci: float = 0.95) -> tuple:
     """Bootstrap CI for the mean.
 
     Returns (lower, upper) confidence interval.
@@ -162,15 +158,14 @@ class OPEEvaluator:
         obs = self.dataset["observations"]
         actions = self.dataset["actions"]
         rewards = self.dataset["rewards"].flatten()
-        episode_ids = self.dataset.get(
-            "episode_ids", np.zeros(len(rewards), dtype=np.int64)
-        )
+        episode_ids = self.dataset.get("episode_ids", np.zeros(len(rewards), dtype=np.int64))
 
         results = {}
 
         # FQE
         if "fqe" in methods:
             from offline_rl.evaluation.fqe import FQE, FQEConfig
+
             fqe_config = FQEConfig(n_iterations=20, batch_size=min(256, len(obs)))
             fqe = FQE(obs.shape[1], actions.shape[1], eval_policy, fqe_config, self.device)
             fqe.fit(self.dataset, n_iterations=20)
@@ -226,9 +221,7 @@ class OPEEvaluator:
             **results,
         )
 
-    def _compute_log_probs(
-        self, policy, obs: np.ndarray, actions: np.ndarray
-    ) -> np.ndarray:
+    def _compute_log_probs(self, policy, obs: np.ndarray, actions: np.ndarray) -> np.ndarray:
         """Compute surrogate log probs assuming Gaussian noise around policy actions."""
         if policy is None:
             return np.zeros(len(obs))
@@ -247,9 +240,6 @@ class OPEEvaluator:
             diff = actions[i : i + batch_size] - pred_actions
             act_dim = actions.shape[1]
             # Gaussian log prob with std=0.3
-            lp = (
-                -0.5 * (diff**2 / 0.09).sum(axis=1)
-                - act_dim * np.log(0.3 * np.sqrt(2 * np.pi))
-            )
+            lp = -0.5 * (diff**2 / 0.09).sum(axis=1) - act_dim * np.log(0.3 * np.sqrt(2 * np.pi))
             log_probs.append(lp)
         return np.concatenate(log_probs)

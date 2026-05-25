@@ -55,9 +55,7 @@ class SupportEstimator:
             mean_dist = float(dists[0, 0])
         return float(1.0 / (1.0 + mean_dist / (self._ref_dist + 1e-8)))
 
-    def batch_support_scores(
-        self, obs_batch: np.ndarray, action_batch: np.ndarray
-    ) -> np.ndarray:
+    def batch_support_scores(self, obs_batch: np.ndarray, action_batch: np.ndarray) -> np.ndarray:
         """Compute support scores for a batch of (obs, action) pairs."""
         assert self._fitted, "Call fit() before batch_support_scores()"
         if obs_batch.ndim == 1:
@@ -73,8 +71,6 @@ class SupportEstimator:
             mean_dists = dists[:, 0]
         return 1.0 / (1.0 + mean_dists / (self._ref_dist + 1e-8))
 
-    def is_in_support(
-        self, obs: np.ndarray, action: np.ndarray, threshold: float = 0.3
-    ) -> bool:
+    def is_in_support(self, obs: np.ndarray, action: np.ndarray, threshold: float = 0.3) -> bool:
         """Return True if (obs, action) is in support above threshold."""
         return self.support_score(obs, action) >= threshold
