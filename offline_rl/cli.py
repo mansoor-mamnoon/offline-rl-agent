@@ -274,6 +274,18 @@ def evaluate(checkpoint, dataset, ope, algo):
 
 
 @cli.command()
+@click.option("--run", required=True, help="Path to run directory")
+@click.option("--out", default="report.html")
+def report(run, out):
+    """Generate self-contained HTML report for a training run."""
+    import subprocess
+    import sys
+
+    report_script = Path(__file__).parent.parent / "scripts" / "generate_report.py"
+    subprocess.run([sys.executable, str(report_script), "--run", run, "--out", out])
+
+
+@cli.command()
 @click.option("--port", default=8501, type=int)
 def dashboard(port):
     """Launch the OfflineRL-Lab Streamlit dashboard."""
