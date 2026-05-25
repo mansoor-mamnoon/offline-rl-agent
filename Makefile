@@ -1,4 +1,4 @@
-.PHONY: test lint format train-smoke reproduce-small
+.PHONY: test lint format train-smoke reproduce-small type-check reproduce-traffic generate-gifs
 
 test:
 	.venv/bin/pytest tests/ -x --timeout=60
@@ -16,3 +16,13 @@ train-smoke:
 
 reproduce-small:
 	.venv/bin/python scripts/reproduce_table.py --env traffic --seeds 0 1 --n-epochs 10
+
+type-check:
+	.venv/bin/mypy offline_rl/ --ignore-missing-imports --no-strict-optional 2>&1 | tail -20
+
+reproduce-traffic:
+	.venv/bin/python scripts/reproduce_table.py --env traffic --seeds 0 1 2 --n-epochs 30
+
+generate-gifs:
+	mkdir -p artifacts/gifs
+	.venv/bin/python scripts/generate_gifs.py 2>&1 | tail -20
