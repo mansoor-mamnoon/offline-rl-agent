@@ -55,20 +55,19 @@ class DecisionTransformerModel(nn.Module):
         self.embed_drop = nn.Dropout(dropout)
 
         # Transformer
-        self.blocks = nn.ModuleList([
-            TransformerBlock(d_model, n_heads, 4 * d_model, dropout)
-            for _ in range(n_layers)
-        ])
+        self.blocks = nn.ModuleList(
+            [TransformerBlock(d_model, n_heads, 4 * d_model, dropout) for _ in range(n_layers)]
+        )
 
         # Output head for action prediction
         self.action_head = nn.Linear(d_model, act_dim)
 
     def forward(
         self,
-        states: torch.Tensor,       # (B, T, obs_dim)
-        actions: torch.Tensor,      # (B, T, act_dim)
+        states: torch.Tensor,  # (B, T, obs_dim)
+        actions: torch.Tensor,  # (B, T, act_dim)
         returns_to_go: torch.Tensor,  # (B, T, 1)
-        timesteps: torch.Tensor,    # (B, T) long
+        timesteps: torch.Tensor,  # (B, T) long
     ) -> torch.Tensor:
         B, T, _ = states.shape
 

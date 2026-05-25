@@ -28,11 +28,16 @@ def run_algorithm(
     cmd = [
         python,
         train_script,
-        "--algo", algo,
-        "--env", env,
-        "--seed", str(seed),
-        "--n-train-epochs", str(n_epochs),
-        "--n-dataset-episodes", str(n_dataset_episodes),
+        "--algo",
+        algo,
+        "--env",
+        env,
+        "--seed",
+        str(seed),
+        "--n-train-epochs",
+        str(n_epochs),
+        "--n-dataset-episodes",
+        str(n_dataset_episodes),
     ]
     try:
         result = subprocess.run(
@@ -44,7 +49,11 @@ def run_algorithm(
         )
         if result.returncode != 0:
             print(f"  [WARN] {algo}/seed={seed} exited with code {result.returncode}")
-            return {"mean_return": float("nan"), "final_loss": float("nan"), "error": result.stderr[-200:]}
+            return {
+                "mean_return": float("nan"),
+                "final_loss": float("nan"),
+                "error": result.stderr[-200:],
+            }
 
         # Parse final loss from stdout
         final_loss = float("nan")
@@ -99,16 +108,12 @@ def format_val(val):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Reproduce benchmark table for OfflineRL-Lab"
-    )
+    parser = argparse.ArgumentParser(description="Reproduce benchmark table for OfflineRL-Lab")
     parser.add_argument("--env", default="traffic")
     parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     parser.add_argument("--n-epochs", type=int, default=50)
     parser.add_argument("--n-dataset-episodes", type=int, default=200)
-    parser.add_argument(
-        "--algos", nargs="+", default=["bc", "cql", "iql", "td3bc"]
-    )
+    parser.add_argument("--algos", nargs="+", default=["bc", "cql", "iql", "td3bc"])
     args = parser.parse_args()
 
     print(f"\nReproducing benchmark: env={args.env}, seeds={args.seeds}, epochs={args.n_epochs}")
@@ -120,9 +125,7 @@ def main():
         seed_results = []
         for seed in args.seeds:
             print(f"  seed={seed}...", end=" ", flush=True)
-            metrics = run_algorithm(
-                algo, args.env, seed, args.n_epochs, args.n_dataset_episodes
-            )
+            metrics = run_algorithm(algo, args.env, seed, args.n_epochs, args.n_dataset_episodes)
             seed_results.append(metrics)
             ret = metrics.get("mean_return", float("nan"))
             loss = metrics.get("final_loss", float("nan"))
@@ -145,12 +148,8 @@ def main():
             if np.isfinite(r.get("mean_return", float("nan")))
         ]
 
-        loss_str = (
-            f"{np.mean(losses):.4f}±{np.std(losses):.4f}" if losses else "   N/A   "
-        )
-        return_str = (
-            f"{np.mean(returns):.3f}±{np.std(returns):.3f}" if returns else "   N/A   "
-        )
+        loss_str = f"{np.mean(losses):.4f}±{np.std(losses):.4f}" if losses else "   N/A   "
+        return_str = f"{np.mean(returns):.3f}±{np.std(returns):.3f}" if returns else "   N/A   "
         print(f"{algo:<12} {loss_str:<20} {return_str}")
 
     # Save to artifacts/
@@ -169,10 +168,7 @@ def main():
         "n_epochs": args.n_epochs,
         "timestamp": timestamp,
         "results": {
-            algo: [
-                {k: v for k, v in r.items() if k != "run_dir"}
-                for r in seed_results
-            ]
+            algo: [{k: v for k, v in r.items() if k != "run_dir"} for r in seed_results]
             for algo, seed_results in results.items()
         },
     }

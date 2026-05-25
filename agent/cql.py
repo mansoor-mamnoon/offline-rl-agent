@@ -1,38 +1,26 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from models import PolicyNetwork
 
 
 class QNetwork(nn.Module):
+
     def __init__(self, state_dim, action_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(state_dim + action_dim, 256),
+            nn.Linear(state_dim + action_dim, 512),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(512, 512),
             nn.ReLU(),
-            nn.Linear(256, 1)  # outputs scalar Q-value
+            nn.Linear(512, 1)
         )
 
     def forward(self, state, action):
-        x = torch.cat([state, action], dim=1)  # concatenate s and a
+        x = torch.cat([state, action], dim=1)  # concatenate state and action
         return self.net(x)
 
 
-class PolicyNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, action_dim)
-        )
-
-    def forward(self, state):
-        logits = self.net(state)  # unnormalized log-probs
-        return logits
 
 
 class CQLAgent:

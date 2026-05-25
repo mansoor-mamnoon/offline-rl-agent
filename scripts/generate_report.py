@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Generate self-contained HTML report for a training run."""
+
 import argparse
 import base64
 import json
@@ -34,9 +35,7 @@ def load_run_metrics(run_dir: Path) -> list:
 
 def get_git_hash() -> str:
     try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], text=True
-        ).strip()
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True).strip()
     except Exception:
         return "unknown"
 
@@ -73,13 +72,16 @@ def generate_report(run_dir: Path, out_path: Path):
         if valid:
             xs, ys = zip(*valid)
             fig = go.Figure(go.Scatter(x=list(xs), y=list(ys), name="Loss"))
-            fig.update_layout(
-                title="Training Loss", xaxis_title="Step", yaxis_title="Loss"
-            )
+            fig.update_layout(title="Training Loss", xaxis_title="Step", yaxis_title="Loss")
             training_plot = encode_plotly_fig(fig)
 
     # Summary stats
     final_metrics = metrics[-1] if metrics else {}
+
+    def fmt_val(v):
+        if isinstance(v, float):
+            return f"{v:.6f}"
+        return str(v)
 
     # HTML template
     html = f"""<!DOCTYPE html>
@@ -154,7 +156,7 @@ def generate_report(run_dir: Path, out_path: Path):
     <h2>All Metrics (Final Step)</h2>
     <table>
       <tr><th>Metric</th><th>Value</th></tr>
-      {''.join(f'<tr><td>{k}</td><td>{v:.6f if isinstance(v, float) else v}</td></tr>' for k, v in final_metrics.items())}
+      {''.join(f"<tr><td>{k}</td><td>{fmt_val(v)}</td></tr>" for k, v in final_metrics.items())}
     </table>
   </div>
 
@@ -176,9 +178,7 @@ def generate_report(run_dir: Path, out_path: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate HTML report for a training run"
-    )
+    parser = argparse.ArgumentParser(description="Generate HTML report for a training run")
     parser.add_argument("--run", required=True, help="Path to run directory")
     parser.add_argument("--out", default="report.html", help="Output HTML path")
     args = parser.parse_args()

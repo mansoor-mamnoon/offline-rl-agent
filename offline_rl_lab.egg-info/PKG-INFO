@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: offline-rl-lab
+Version: 0.1.0
+Requires-Python: >=3.11
+Requires-Dist: torch>=2.0
+Requires-Dist: numpy
+Requires-Dist: h5py
+Requires-Dist: hydra-core
+Requires-Dist: click
+Requires-Dist: streamlit
+Requires-Dist: plotly
+Requires-Dist: pandas
+Requires-Dist: scipy
+Requires-Dist: scikit-learn
+Requires-Dist: tensorboard
+Requires-Dist: jinja2
+Requires-Dist: gymnasium
+Requires-Dist: tqdm
+Requires-Dist: rich
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest-timeout; extra == "dev"

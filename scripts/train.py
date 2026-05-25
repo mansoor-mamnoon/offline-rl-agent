@@ -41,6 +41,7 @@ def main():
     # 2. Create/load environment
     if args.env == "traffic":
         from offline_rl.envs.traffic_routing import TrafficRoutingEnv, load_aware_policy
+
         env = TrafficRoutingEnv(seed=args.seed)
         policy_fn = load_aware_policy
         obs_dim = 32
@@ -48,6 +49,7 @@ def main():
         action_space = "continuous"
     else:
         from offline_rl.envs.gridworld import GridWorld, GridWorldConfig, mixed_policy
+
         env_cfg = GridWorldConfig()
         env = GridWorld(env_cfg)
         policy_fn = mixed_policy
@@ -61,6 +63,7 @@ def main():
         dataset = env.generate_dataset(policy_fn, n_episodes=args.n_dataset_episodes)
     else:
         from offline_rl.datasets.loader import load_dataset
+
         print(f"[train] Loading dataset from {args.dataset}")
         dataset = load_dataset(args.dataset)
 
@@ -71,6 +74,7 @@ def main():
     if args.algo == "bc":
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
         from offline_rl.training.trainer import BCTrainer
+
         algo_cfg = BCConfig(
             hidden_dims=[256, 256],
             lr=3e-4,
@@ -84,6 +88,7 @@ def main():
     elif args.algo == "cql":
         from offline_rl.algorithms.cql import CQL, CQLConfig
         from offline_rl.training.trainer import CQLTrainer
+
         algo_cfg = CQLConfig(
             hidden_dims=[256, 256],
             lr=3e-4,
@@ -98,6 +103,7 @@ def main():
     elif args.algo == "iql":
         from offline_rl.algorithms.iql import IQL, IQLConfig
         from offline_rl.training.trainer import IQLTrainer
+
         algo_cfg = IQLConfig(
             hidden_dims=[256, 256],
             lr=3e-4,
@@ -110,6 +116,7 @@ def main():
     elif args.algo == "td3bc":
         from offline_rl.algorithms.td3_bc import TD3BC, TD3BCConfig
         from offline_rl.training.trainer import TD3BCTrainer
+
         algo_cfg = TD3BCConfig(
             hidden_dims=[256, 256],
             lr=3e-4,
@@ -122,6 +129,7 @@ def main():
     elif args.algo == "dt":
         from offline_rl.algorithms.decision_transformer import DecisionTransformer, DTConfig
         from offline_rl.training.trainer import DTTrainer
+
         algo_cfg = DTConfig(
             d_model=128,
             n_layers=3,
@@ -138,6 +146,7 @@ def main():
         print(f"[train] WARNING: {args.algo} not yet implemented. Using BC.")
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
         from offline_rl.training.trainer import BCTrainer
+
         algo_cfg = BCConfig(
             hidden_dims=[256, 256],
             lr=3e-4,
@@ -150,6 +159,7 @@ def main():
 
     # 5. Create logger
     from offline_rl.training.logger import Logger
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = str(Path(args.out) / f"{args.algo}_{args.env}_{timestamp}")
     logger = Logger(run_dir)

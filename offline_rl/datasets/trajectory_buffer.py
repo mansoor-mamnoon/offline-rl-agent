@@ -69,7 +69,9 @@ class TrajectoryReplayBuffer:
         return {
             "observations": torch.FloatTensor(np.array(batch["observations"])).to(self.device),
             "actions": torch.FloatTensor(np.array(batch["actions"])).to(self.device),
-            "returns_to_go": torch.FloatTensor(np.array(batch["returns_to_go"])).unsqueeze(-1).to(self.device),
+            "returns_to_go": torch.FloatTensor(np.array(batch["returns_to_go"]))
+            .unsqueeze(-1)
+            .to(self.device),
             "timesteps": torch.LongTensor(np.array(batch["timesteps"])).to(self.device),
         }
 

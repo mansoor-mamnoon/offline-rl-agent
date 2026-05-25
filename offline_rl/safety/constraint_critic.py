@@ -24,15 +24,13 @@ class ConstraintCritic:
         self.discount = discount
 
         # One Q network per constraint
-        self.q_networks = nn.ModuleList([
-            MLP(obs_dim + act_dim, 1, hidden_dims)
-            for _ in range(n_constraints)
-        ]).to(device)
+        self.q_networks = nn.ModuleList(
+            [MLP(obs_dim + act_dim, 1, hidden_dims) for _ in range(n_constraints)]
+        ).to(device)
 
-        self.q_targets = nn.ModuleList([
-            MLP(obs_dim + act_dim, 1, hidden_dims)
-            for _ in range(n_constraints)
-        ]).to(device)
+        self.q_targets = nn.ModuleList(
+            [MLP(obs_dim + act_dim, 1, hidden_dims) for _ in range(n_constraints)]
+        ).to(device)
 
         # Copy weights to targets
         for q, qt in zip(self.q_networks, self.q_targets):
@@ -51,9 +49,7 @@ class ConstraintCritic:
         obs = batch["observations"].to(self.device)
         actions = batch["actions"].to(self.device)
         next_obs = batch["next_observations"].to(self.device)
-        next_actions = batch.get(
-            "next_actions", torch.randn_like(actions)
-        ).to(self.device)
+        next_actions = batch.get("next_actions", torch.randn_like(actions)).to(self.device)
         dones = batch["dones"].to(self.device)
 
         # Costs: from batch or generate from obs/next_obs (simplified)
@@ -75,7 +71,7 @@ class ConstraintCritic:
         for i, (q_net, q_tgt, name) in enumerate(
             zip(self.q_networks, self.q_targets, self.constraint_names)
         ):
-            target = costs[:, i:i+1] + self.discount * (1 - dones) * q_tgt(next_sa)
+            target = costs[:, i : i + 1] + self.discount * (1 - dones) * q_tgt(next_sa)
             q_pred = q_net(sa)
             loss = nn.functional.mse_loss(q_pred, target.detach())
             total_loss += loss
@@ -87,9 +83,7 @@ class ConstraintCritic:
 
         return losses
 
-    def estimate_constraint_violation(
-        self, obs: np.ndarray, action: np.ndarray
-    ) -> np.ndarray:
+    def estimate_constraint_violation(self, obs: np.ndarray, action: np.ndarray) -> np.ndarray:
         obs_t = torch.FloatTensor(obs).unsqueeze(0).to(self.device)
         act_t = torch.FloatTensor(action).unsqueeze(0).to(self.device)
         sa = torch.cat([obs_t, act_t], dim=-1)

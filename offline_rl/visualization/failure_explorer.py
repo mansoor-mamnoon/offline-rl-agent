@@ -57,9 +57,7 @@ class FailureExplorer:
                     support_scores.append(score)
 
                 if self.constraint_critic is not None:
-                    violations = self.constraint_critic.estimate_constraint_violation(
-                        obs, action
-                    )
+                    violations = self.constraint_critic.estimate_constraint_violation(obs, action)
                     constraint_violations.append(violations)
 
                 next_obs, reward, done, _ = self.env.step(action)
@@ -123,9 +121,7 @@ class FailureExplorer:
                 loads = episode.states[:, :3]  # first 3 dims are loads in traffic env
                 if loads[-1].mean() > loads[0].mean() + 0.3:
                     cause = "cascading_overload"
-                    evidence["load_increase"] = float(
-                        loads[-1].mean() - loads[0].mean()
-                    )
+                    evidence["load_increase"] = float(loads[-1].mean() - loads[0].mean())
 
         counterfactual = {
             "ood_action": "Use behavior policy actions when support score falls below threshold",

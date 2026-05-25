@@ -28,9 +28,7 @@ page = st.sidebar.selectbox("Page", pages)
 
 if page == "Dataset Diagnostics":
     st.title("Dataset Diagnostics")
-    st.markdown(
-        "Upload an HDF5 dataset (`.h5` / `.hdf5`) to run a full diagnostic analysis."
-    )
+    st.markdown("Upload an HDF5 dataset (`.h5` / `.hdf5`) to run a full diagnostic analysis.")
 
     uploaded_file = st.file_uploader("Upload HDF5 Dataset", type=["h5", "hdf5"])
 
@@ -89,8 +87,7 @@ if page == "Dataset Diagnostics":
                     y=pts[:, 1],
                     opacity=0.3,
                     title=(
-                        f"PCA of States "
-                        f"(explained var: {report.pca_explained_variance:.2%})"
+                        f"PCA of States " f"(explained var: {report.pca_explained_variance:.2%})"
                     ),
                     labels={"x": "PC1", "y": "PC2"},
                 )
@@ -121,22 +118,17 @@ if page == "Dataset Diagnostics":
             warnings = []
             if report.ood_risk["risk_level"] == "high":
                 frac = report.ood_risk["sparse_state_fraction"]
-                warnings.append(
-                    f"{frac*100:.1f}% of random actions are far from dataset support"
-                )
+                warnings.append(f"{frac*100:.1f}% of random actions are far from dataset support")
             if abs(report.reward_stats["skewness"]) > 2.0:
                 warnings.append(
                     f"Reward distribution heavily skewed "
                     f"(skewness={report.reward_stats['skewness']:.2f})"
                 )
             if report.episode_stats["terminal_rate"] < 0.1:
-                warnings.append(
-                    "Very few episodes reach terminal state — check done flags"
-                )
+                warnings.append("Very few episodes reach terminal state — check done flags")
             if len(report.outlier_indices) > 10:
                 warnings.append(
-                    f"{len(report.outlier_indices)} outlier transitions detected "
-                    f"(IQR-based)"
+                    f"{len(report.outlier_indices)} outlier transitions detected " f"(IQR-based)"
                 )
 
             if warnings:
@@ -189,8 +181,12 @@ elif page == "Training Runs":
 
                 st.subheader("Training Curves")
                 metric_keys = [
-                    "loss", "q_loss", "policy_loss", "cql_penalty",
-                    "value_loss", "bc_loss",
+                    "loss",
+                    "q_loss",
+                    "policy_loss",
+                    "cql_penalty",
+                    "value_loss",
+                    "bc_loss",
                 ]
 
                 for key in metric_keys:
@@ -203,16 +199,12 @@ elif page == "Training Runs":
                         ]
                         if vals:
                             steps, values = zip(*vals)
-                            df = pd.DataFrame(
-                                {"step": steps, key: values, "run": run_name}
-                            )
+                            df = pd.DataFrame({"step": steps, key: values, "run": run_name})
                             dfs.append(df)
 
                     if dfs:
                         df_all = pd.concat(dfs, ignore_index=True)
-                        fig = px.line(
-                            df_all, x="step", y=key, color="run", title=key
-                        )
+                        fig = px.line(df_all, x="step", y=key, color="run", title=key)
                         st.plotly_chart(fig, use_container_width=True)
 
                 # Config view
@@ -250,7 +242,9 @@ elif page == "Policy Comparison":
                     r.get("final_loss")
                     for r in seed_results
                     if r.get("final_loss") is not None
-                    and not (isinstance(r.get("final_loss"), float) and np.isnan(r.get("final_loss")))
+                    and not (
+                        isinstance(r.get("final_loss"), float) and np.isnan(r.get("final_loss"))
+                    )
                 ]
                 rows.append(
                     {
@@ -264,10 +258,7 @@ elif page == "Policy Comparison":
                 st.dataframe(pd.DataFrame(rows), use_container_width=True)
 
     elif runs_dir.exists():
-        run_dirs = [
-            d for d in runs_dir.iterdir()
-            if d.is_dir() and (d / "metrics.jsonl").exists()
-        ]
+        run_dirs = [d for d in runs_dir.iterdir() if d.is_dir() and (d / "metrics.jsonl").exists()]
         if run_dirs:
             st.subheader("Run Comparison")
             comparison_data = []

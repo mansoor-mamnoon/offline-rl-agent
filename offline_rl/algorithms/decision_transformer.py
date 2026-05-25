@@ -37,15 +37,13 @@ class DecisionTransformer:
             dropout=config.dropout,
         ).to(device)
 
-        self.optimizer = torch.optim.AdamW(
-            self.model.parameters(), lr=config.lr, weight_decay=1e-4
-        )
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.lr, weight_decay=1e-4)
 
     def train_step(self, batch: dict) -> dict:
-        states = batch["observations"]    # (B, T, obs_dim)
-        actions = batch["actions"]        # (B, T, act_dim)
-        rtgs = batch["returns_to_go"]     # (B, T, 1)
-        timesteps = batch["timesteps"]    # (B, T)
+        states = batch["observations"]  # (B, T, obs_dim)
+        actions = batch["actions"]  # (B, T, act_dim)
+        rtgs = batch["returns_to_go"]  # (B, T, 1)
+        timesteps = batch["timesteps"]  # (B, T)
 
         pred_actions = self.model(states, actions, rtgs, timesteps)
 
@@ -61,9 +59,9 @@ class DecisionTransformer:
 
     def select_action(
         self,
-        obs_history: np.ndarray,      # (T, obs_dim)
-        action_history: np.ndarray,   # (T, act_dim)
-        rtg_history: np.ndarray,      # (T,)
+        obs_history: np.ndarray,  # (T, obs_dim)
+        action_history: np.ndarray,  # (T, act_dim)
+        rtg_history: np.ndarray,  # (T,)
         timestep: int,
         target_return: float = None,
     ) -> np.ndarray:
