@@ -61,8 +61,8 @@ def _add_hud_matplotlib(frame, step, rewards_so_far, action):
     ax.axis("off")
     fig.tight_layout(pad=0.1)
     fig.canvas.draw()
-    buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
+    buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (4,))[:, :, :3]
     plt.close(fig)
     return buf
 
@@ -86,8 +86,8 @@ def _matplotlib_frame(obs, action, step, rewards_so_far):
 
     fig.tight_layout()
     fig.canvas.draw()
-    buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
+    buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (4,))[:, :, :3]
     plt.close(fig)
     return buf
 
@@ -154,7 +154,7 @@ def _add_text_label(frame, label):
     ax.axis("off")
     fig.tight_layout(pad=0)
     fig.canvas.draw()
-    buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
+    buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (4,))[:, :, :3]
     plt.close(fig)
     return buf
