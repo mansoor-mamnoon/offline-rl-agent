@@ -1,7 +1,6 @@
 """Safety evaluation metrics for offline RL policies."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 

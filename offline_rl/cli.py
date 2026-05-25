@@ -1,5 +1,4 @@
 import click
-import os
 import sys
 import random
 import numpy as np
@@ -22,7 +21,6 @@ def diagnose(dataset, out):
     try:
         from rich.console import Console
         from rich.table import Table
-        from rich.panel import Panel
 
         _rich = True
     except ImportError:
@@ -279,7 +277,6 @@ def evaluate(checkpoint, dataset, ope, algo):
 def report(run, out):
     """Generate self-contained HTML report for a training run."""
     import subprocess
-    import sys
 
     report_script = Path(__file__).parent.parent / "scripts" / "generate_report.py"
     subprocess.run([sys.executable, str(report_script), "--run", run, "--out", out])
@@ -290,7 +287,6 @@ def report(run, out):
 def dashboard(port):
     """Launch the OfflineRL-Lab Streamlit dashboard."""
     import subprocess
-    import sys
 
     dashboard_path = Path(__file__).parent.parent / "dashboard" / "app.py"
     subprocess.run(

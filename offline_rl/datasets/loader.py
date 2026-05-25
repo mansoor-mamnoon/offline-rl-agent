@@ -2,7 +2,6 @@
 
 import numpy as np
 import h5py
-from typing import Optional
 
 REQUIRED_KEYS = {"observations", "actions", "rewards", "next_observations", "dones"}
 

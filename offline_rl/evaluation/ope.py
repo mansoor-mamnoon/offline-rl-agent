@@ -1,7 +1,7 @@
 """Offline Policy Evaluation (OPE) with WIS, FQE, and Doubly Robust estimators."""
 
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import numpy as np
 

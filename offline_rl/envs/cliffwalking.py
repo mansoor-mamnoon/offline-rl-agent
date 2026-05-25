@@ -9,9 +9,6 @@ from offline_rl.envs.gridworld import GridWorld, GridWorldConfig
 
 def make_cliff_walking() -> GridWorld:
     """Create the Cliff Walking environment from Sutton & Barto."""
-    grid_size_r = 4
-    grid_size_c = 12
-
     # Cliff cells: row 3 (bottom), columns 1..10
     cliff_cells = [(3, c) for c in range(1, 11)]
 
@@ -49,7 +46,6 @@ class CliffWalking(GridWorld):
         return np.array([r / self.n_rows, c / self.n_cols], dtype="float32")
 
     def step(self, action: int):
-        import numpy as np
 
         if self.done:
             raise RuntimeError("Episode is done. Call reset().")

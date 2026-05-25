@@ -1,9 +1,6 @@
 """Training loop for offline RL algorithms."""
 
 import numpy as np
-import torch
-from pathlib import Path
-from typing import Optional
 
 from offline_rl.datasets.replay_buffer import ReplayBuffer
 from offline_rl.training.logger import Logger

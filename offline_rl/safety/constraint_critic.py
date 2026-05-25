@@ -65,9 +65,6 @@ class ConstraintCritic:
         total_loss = 0
         losses = {}
 
-        with torch.no_grad():
-            q_next = [qt(next_sa) for qt in self.q_targets]
-
         for i, (q_net, q_tgt, name) in enumerate(
             zip(self.q_networks, self.q_targets, self.constraint_names)
         ):
