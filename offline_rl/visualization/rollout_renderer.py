@@ -1,11 +1,11 @@
 """Generate rollout GIFs from a trained policy in GridWorld or Traffic env."""
+
 import numpy as np
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
-from typing import Optional
 
 
 def collect_rollout(env, policy, max_steps=200, seed=None):
@@ -101,8 +101,7 @@ def save_gif(frames, path: str, fps: int = 10, loop: int = 0):
     if frames:
         h, w = frames[0].shape[:2]
         frames = [
-            f if f.shape[:2] == (h, w) else np.zeros((h, w, 3), dtype=np.uint8)
-            for f in frames
+            f if f.shape[:2] == (h, w) else np.zeros((h, w, 3), dtype=np.uint8) for f in frames
         ]
         # Downsample if too many frames
         if len(frames) > 120:

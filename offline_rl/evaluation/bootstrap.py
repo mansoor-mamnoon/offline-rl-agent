@@ -1,4 +1,5 @@
 """Bootstrap confidence interval utilities."""
+
 import numpy as np
 from typing import Callable
 
@@ -23,9 +24,7 @@ def bootstrap_ci(
     )
 
 
-def bootstrap_ci_mean(
-    data: np.ndarray, n_bootstrap: int = 1000, ci: float = 0.95
-) -> tuple:
+def bootstrap_ci_mean(data: np.ndarray, n_bootstrap: int = 1000, ci: float = 0.95) -> tuple:
     return bootstrap_ci(data, np.mean, n_bootstrap, ci)
 
 

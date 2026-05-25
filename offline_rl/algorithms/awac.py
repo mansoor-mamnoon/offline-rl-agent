@@ -7,10 +7,10 @@ but with a separate Q-function training step.
 Reference: Nair et al., "Accelerating Online Reinforcement Learning with
 Offline Datasets" (2021).
 """
+
 from dataclasses import dataclass, field
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 from offline_rl.models.mlp import GaussianMLP, polyak_update
@@ -32,9 +32,7 @@ class AWACConfig:
 class AWAC:
     """Advantage Weighted Actor Critic."""
 
-    def __init__(
-        self, obs_dim: int, act_dim: int, config: AWACConfig, device: str = "cpu"
-    ):
+    def __init__(self, obs_dim: int, act_dim: int, config: AWACConfig, device: str = "cpu"):
         self.config = config
         self.device = device
         self.obs_dim = obs_dim
@@ -59,9 +57,7 @@ class AWAC:
         dist = torch.distributions.Normal(mean, std)
         raw = dist.rsample()
         action = torch.tanh(raw)
-        log_prob = (
-            dist.log_prob(raw) - torch.log(1 - action.pow(2) + 1e-6)
-        ).sum(-1, keepdim=True)
+        log_prob = (dist.log_prob(raw) - torch.log(1 - action.pow(2) + 1e-6)).sum(-1, keepdim=True)
         return action, log_prob, mean
 
     def train_step(self, batch: dict) -> dict:

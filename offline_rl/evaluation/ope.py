@@ -265,8 +265,7 @@ class ModelBasedEstimator:
         self.transition_model = MLP(obs_dim + act_dim, obs_dim, hidden_dims).to(device)
         self.reward_model = MLP(obs_dim + act_dim, 1, hidden_dims).to(device)
         self.optimizer = torch.optim.Adam(
-            list(self.transition_model.parameters())
-            + list(self.reward_model.parameters()),
+            list(self.transition_model.parameters()) + list(self.reward_model.parameters()),
             lr=1e-3,
         )
         self._fitted = False
@@ -280,9 +279,7 @@ class ModelBasedEstimator:
         obs = torch.FloatTensor(dataset["observations"]).to(self.device)
         actions = torch.FloatTensor(dataset["actions"]).to(self.device)
         next_obs = torch.FloatTensor(dataset["next_observations"]).to(self.device)
-        rewards = (
-            torch.FloatTensor(dataset["rewards"]).to(self.device).unsqueeze(-1)
-        )
+        rewards = torch.FloatTensor(dataset["rewards"]).to(self.device).unsqueeze(-1)
 
         sa = torch.cat([obs, actions], dim=-1)
         N = len(obs)
@@ -292,9 +289,7 @@ class ModelBasedEstimator:
             idx = torch.randperm(N)[:batch_size]
             pred_next = self.transition_model(sa[idx])
             pred_r = self.reward_model(sa[idx])
-            loss = F.mse_loss(pred_next, next_obs[idx]) + F.mse_loss(
-                pred_r, rewards[idx]
-            )
+            loss = F.mse_loss(pred_next, next_obs[idx]) + F.mse_loss(pred_r, rewards[idx])
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -316,9 +311,9 @@ class ModelBasedEstimator:
 
         returns = []
         for _ in range(n_rollouts):
-            obs = torch.FloatTensor(
-                np.random.randn(self.obs_dim).astype(np.float32)
-            ).to(self.device)
+            obs = torch.FloatTensor(np.random.randn(self.obs_dim).astype(np.float32)).to(
+                self.device
+            )
             total_r = 0.0
             gamma = 1.0
             for t in range(horizon):

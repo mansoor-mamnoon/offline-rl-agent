@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Generate demo GIFs for OfflineRL-Lab README."""
+
 import sys
 import os
 
@@ -76,9 +77,7 @@ def generate_traffic_comparison_gif():
         fig, axes = plt.subplots(1, 2, figsize=(10, 3), dpi=60)
 
         axes[0].plot(returns_rand[: i + 2], color="red", linewidth=2)
-        axes[0].set_title(
-            f"Random Policy\nReturn: {returns_rand[i + 1]:.1f}", fontsize=10
-        )
+        axes[0].set_title(f"Random Policy\nReturn: {returns_rand[i + 1]:.1f}", fontsize=10)
         min_y = min(min(returns_rand), min(returns_smart)) - 5
         max_y = max(max(returns_rand), max(returns_smart)) + 5
         axes[0].set_ylim(min_y, max_y)
@@ -87,9 +86,7 @@ def generate_traffic_comparison_gif():
         axes[0].grid(True, alpha=0.3)
 
         axes[1].plot(returns_smart[: i + 2], color="green", linewidth=2)
-        axes[1].set_title(
-            f"Load-Aware Policy\nReturn: {returns_smart[i + 1]:.1f}", fontsize=10
-        )
+        axes[1].set_title(f"Load-Aware Policy\nReturn: {returns_smart[i + 1]:.1f}", fontsize=10)
         axes[1].set_ylim(min_y, max_y)
         axes[1].set_xlabel("Step")
         axes[1].grid(True, alpha=0.3)
@@ -127,10 +124,7 @@ def generate_dataset_diagnostics_gif():
     for i in range(1, len(metrics_to_show) + 1):
         fig, ax = plt.subplots(figsize=(7, 4), dpi=80)
         labels = [m[0] for m in metrics_to_show[:i]]
-        values = [
-            min(m[1], 1.0) if m[1] <= 1.0 else m[1] / 200000
-            for m in metrics_to_show[:i]
-        ]
+        values = [min(m[1], 1.0) if m[1] <= 1.0 else m[1] / 200000 for m in metrics_to_show[:i]]
         colors = [m[2] for m in metrics_to_show[:i]]
 
         bars = ax.barh(labels, values, color=colors, alpha=0.8)
@@ -210,9 +204,7 @@ def generate_ope_gif():
         ax.set_xticks(list(x))
         ax.set_xticklabels(methods[:n_shown])
         ax.set_ylabel("Estimated Return")
-        ax.set_title(
-            "Offline Policy Evaluation (CQL Policy)", fontsize=11, fontweight="bold"
-        )
+        ax.set_title("Offline Policy Evaluation (CQL Policy)", fontsize=11, fontweight="bold")
         ax.set_ylim(55, 80)
         ax.grid(True, alpha=0.3, axis="y")
 

@@ -96,7 +96,9 @@ def diagnose(dataset, out):
 
 
 @cli.command()
-@click.option("--algo", default="bc", type=click.Choice(["bc", "cql", "iql", "td3bc", "dt", "awac"]))
+@click.option(
+    "--algo", default="bc", type=click.Choice(["bc", "cql", "iql", "td3bc", "dt", "awac"])
+)
 @click.option("--env", default="traffic", type=click.Choice(["traffic", "gridworld"]))
 @click.option("--dataset", default=None, help="Path to HDF5 dataset (generated if not given)")
 @click.option("--config", default=None, help="Path to algorithm config YAML")
@@ -320,7 +322,6 @@ def dashboard(port):
 )
 def render(checkpoint, env, out, n_steps, seed, fps, compare):
     """Generate a rollout GIF from a trained policy checkpoint."""
-    import os
     import torch
 
     from offline_rl.visualization.rollout_renderer import collect_rollout, save_gif
@@ -444,14 +445,10 @@ def compare(runs, metric, out):
                 for r in records
                 if r.get("loss") is not None or r.get("q_loss") is not None
             ]
-            returns = [
-                r.get("mean_return") for r in records if r.get("mean_return") is not None
-            ]
+            returns = [r.get("mean_return") for r in records if r.get("mean_return") is not None]
 
             final_loss_val = final.get("loss", final.get("q_loss"))
-            final_loss_str = (
-                f"{final_loss_val:.4f}" if isinstance(final_loss_val, float) else "N/A"
-            )
+            final_loss_str = f"{final_loss_val:.4f}" if isinstance(final_loss_val, float) else "N/A"
 
             table.add_row(
                 run_name,

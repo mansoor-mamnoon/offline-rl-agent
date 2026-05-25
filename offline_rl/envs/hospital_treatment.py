@@ -4,8 +4,9 @@ A simplified clinical decision support environment where an agent recommends
 treatment intensities for patients based on their health state. Designed for
 offline RL research with safety constraints (avoid harmful over/under-treatment).
 """
+
 import numpy as np
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 import h5py
 from pathlib import Path
@@ -99,9 +100,7 @@ class HospitalTreatmentEnv:
 
         # Disease progression/regression
         treatment_effect = (
-            drug_dose
-            * 0.15
-            * (1.0 - 0.3 * self._patient_profile["disease_aggressiveness"])
+            drug_dose * 0.15 * (1.0 - 0.3 * self._patient_profile["disease_aggressiveness"])
         )
         natural_progression = 0.02 * self._patient_profile["disease_aggressiveness"]
         noise = self.rng.normal(0, 0.02)

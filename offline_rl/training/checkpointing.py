@@ -1,4 +1,5 @@
 """Checkpoint management: save, load, resume training."""
+
 import json
 import hashlib
 import subprocess
@@ -10,9 +11,7 @@ import numpy as np
 
 def get_git_hash() -> str:
     try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], text=True
-        ).strip()
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True).strip()
     except Exception:
         return "unknown"
 
@@ -53,9 +52,7 @@ class CheckpointManager:
         if hasattr(algorithm, "qf"):
             save_dict["qf"] = algorithm.qf.state_dict()
             save_dict["qf_target"] = (
-                algorithm.qf_target.state_dict()
-                if hasattr(algorithm, "qf_target")
-                else None
+                algorithm.qf_target.state_dict() if hasattr(algorithm, "qf_target") else None
             )
         if hasattr(algorithm, "policy"):
             save_dict["policy"] = algorithm.policy.state_dict()

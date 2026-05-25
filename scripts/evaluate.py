@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Standalone evaluation script for offline RL policies."""
+
 import argparse
 import json
 import sys
@@ -49,9 +50,7 @@ def load_policy_from_checkpoint(checkpoint_path: str, device: str = "cpu"):
                 return torch.tanh(mean).squeeze(0).numpy()
 
     else:
-        raise ValueError(
-            f"Cannot determine policy type from checkpoint keys: {list(ckpt.keys())}"
-        )
+        raise ValueError(f"Cannot determine policy type from checkpoint keys: {list(ckpt.keys())}")
 
     return select_action, obs_dim, act_dim
 
@@ -96,14 +95,10 @@ def evaluate_in_env(policy, env, n_episodes=20, seed=0):
 def main():
     parser = argparse.ArgumentParser(description="Evaluate a trained offline RL policy")
     parser.add_argument("--checkpoint", required=True, help="Path to checkpoint.pt")
-    parser.add_argument(
-        "--env", default="traffic", choices=["traffic", "gridworld", "hospital"]
-    )
+    parser.add_argument("--env", default="traffic", choices=["traffic", "gridworld", "hospital"])
     parser.add_argument("--n-episodes", type=int, default=20)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument(
-        "--ope", default="", help="Comma-separated OPE methods: fqe,wis,dr"
-    )
+    parser.add_argument("--ope", default="", help="Comma-separated OPE methods: fqe,wis,dr")
     parser.add_argument("--dataset", default=None, help="Dataset for OPE")
     parser.add_argument("--out", default=None, help="Save results to JSON")
     args = parser.parse_args()
@@ -134,9 +129,7 @@ def main():
 
         env = HospitalTreatmentEnv()
 
-    print(
-        f"\nEvaluating {Path(checkpoint).name} on {args.env} ({args.n_episodes} episodes)..."
-    )
+    print(f"\nEvaluating {Path(checkpoint).name} on {args.env} ({args.n_episodes} episodes)...")
     metrics = evaluate_in_env(policy, env, args.n_episodes, args.seed)
 
     print("\n" + "=" * 50)

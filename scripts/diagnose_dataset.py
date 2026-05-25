@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Standalone dataset diagnostics script."""
+
 import argparse
 import json
 import sys
@@ -50,18 +51,14 @@ def main():
     warnings = []
     if report.ood_risk.get("risk_level") == "high":
         frac = report.ood_risk.get("sparse_state_fraction", 0)
-        warnings.append(
-            f"{frac*100:.1f}% of random actions are far from dataset support"
-        )
+        warnings.append(f"{frac*100:.1f}% of random actions are far from dataset support")
     if abs(report.reward_stats.get("skewness", 0)) > 2:
         warnings.append(
             f"Reward distribution is heavily skewed "
             f"(skew={report.reward_stats['skewness']:.2f})"
         )
     if len(report.outlier_indices) > info["n_transitions"] * 0.01:
-        warnings.append(
-            f"{len(report.outlier_indices)} outlier transitions detected (>1%)"
-        )
+        warnings.append(f"{len(report.outlier_indices)} outlier transitions detected (>1%)")
 
     if warnings:
         print("\n  Warnings:")
@@ -123,9 +120,7 @@ def main():
                     c=dataset["rewards"][: len(pts)].flatten(),
                     cmap="coolwarm",
                 )
-                ax.set_title(
-                    f'State PCA (var={report.pca_explained_variance:.2%})'
-                )
+                ax.set_title(f"State PCA (var={report.pca_explained_variance:.2%})")
                 ax.set_xlabel("PC1")
                 ax.set_ylabel("PC2")
                 plt.tight_layout()
