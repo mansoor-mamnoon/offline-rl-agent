@@ -7,6 +7,7 @@ from offline_rl.envs.gridworld import (
 )
 from offline_rl.envs.cliffwalking import CliffWalking, make_cliff_walking
 from offline_rl.envs.traffic_routing import TrafficRoutingEnv, get_policy
+from offline_rl.envs.hospital_treatment import HospitalTreatmentEnv, HospitalConfig
 
 __all__ = [
     "GridWorld",
@@ -18,4 +19,6 @@ __all__ = [
     "make_cliff_walking",
     "TrafficRoutingEnv",
     "get_policy",
+    "HospitalTreatmentEnv",
+    "HospitalConfig",
 ]

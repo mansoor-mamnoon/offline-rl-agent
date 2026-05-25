@@ -1,0 +1,8 @@
+n_features: 16
+max_steps: 20
+critical_threshold: 0.8
+recovery_threshold: 0.2
+recovery_reward: 10.0
+death_penalty: -10.0
+treatment_cost: 0.5
+side_effect_penalty: 2.0
