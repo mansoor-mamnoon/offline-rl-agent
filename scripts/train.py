@@ -70,6 +70,7 @@ def main():
     # 4. Create algorithm
     if args.algo == "bc":
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
+        from offline_rl.training.trainer import BCTrainer
         algo_cfg = BCConfig(
             hidden_dims=[256, 256],
             lr=3e-4,
@@ -78,9 +79,50 @@ def main():
             action_space=action_space,
         )
         algorithm = BehaviorCloning(obs_dim, act_dim, algo_cfg)
+        TrainerClass = BCTrainer
+
+    elif args.algo == "cql":
+        from offline_rl.algorithms.cql import CQL, CQLConfig
+        from offline_rl.training.trainer import CQLTrainer
+        algo_cfg = CQLConfig(
+            hidden_dims=[256, 256],
+            lr=3e-4,
+            batch_size=256,
+            n_epochs=args.n_train_epochs,
+            alpha=5.0,
+            alpha_auto=True,
+        )
+        algorithm = CQL(obs_dim, act_dim, algo_cfg)
+        TrainerClass = CQLTrainer
+
+    elif args.algo == "iql":
+        from offline_rl.algorithms.iql import IQL, IQLConfig
+        from offline_rl.training.trainer import IQLTrainer
+        algo_cfg = IQLConfig(
+            hidden_dims=[256, 256],
+            lr=3e-4,
+            batch_size=256,
+            n_epochs=args.n_train_epochs,
+        )
+        algorithm = IQL(obs_dim, act_dim, algo_cfg)
+        TrainerClass = IQLTrainer
+
+    elif args.algo == "td3bc":
+        from offline_rl.algorithms.td3_bc import TD3BC, TD3BCConfig
+        from offline_rl.training.trainer import TD3BCTrainer
+        algo_cfg = TD3BCConfig(
+            hidden_dims=[256, 256],
+            lr=3e-4,
+            batch_size=256,
+            n_epochs=args.n_train_epochs,
+        )
+        algorithm = TD3BC(obs_dim, act_dim, algo_cfg)
+        TrainerClass = TD3BCTrainer
+
     else:
         print(f"[train] WARNING: {args.algo} not yet implemented. Using BC.")
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
+        from offline_rl.training.trainer import BCTrainer
         algo_cfg = BCConfig(
             hidden_dims=[256, 256],
             lr=3e-4,
@@ -89,6 +131,7 @@ def main():
             action_space=action_space,
         )
         algorithm = BehaviorCloning(obs_dim, act_dim, algo_cfg)
+        TrainerClass = BCTrainer
 
     # 5. Create logger
     from offline_rl.training.logger import Logger
@@ -107,25 +150,24 @@ def main():
     }
     logger.save_config(config_dict)
 
-    # 6. Create trainer
-    from offline_rl.training.trainer import BCTrainer
-    trainer = BCTrainer(algorithm, dataset, algo_cfg, logger)
+    # 6. Create trainer and run
+    trainer = TrainerClass(algorithm, dataset, algo_cfg, logger)
 
-    # 7. Run training
     print(f"[train] Starting training for {args.n_train_epochs} epochs...")
     results = trainer.train()
 
-    # 8. Save final checkpoint (already done in trainer, but confirm)
+    # 7. Confirm output files
     final_ckpt = Path(run_dir) / "checkpoint.pt"
     print(f"[train] Training complete!")
     print(f"[train] Final loss: {results['final_loss']:.4f}")
     print(f"[train] Checkpoint saved: {final_ckpt}")
     print(f"[train] Run dir: {run_dir}")
 
-    # Verify files exist
     assert final_ckpt.exists(), f"Checkpoint not found: {final_ckpt}"
     assert (Path(run_dir) / "metrics.jsonl").exists(), "metrics.jsonl not found"
-    assert (Path(run_dir) / "config.yaml").exists() or (Path(run_dir) / "config.json").exists(), "config not found"
+    assert (Path(run_dir) / "config.yaml").exists() or (
+        Path(run_dir) / "config.json"
+    ).exists(), "config not found"
 
     print("[train] All output files verified.")
 

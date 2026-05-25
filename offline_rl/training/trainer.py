@@ -101,3 +101,219 @@ class BCTrainer:
             "min_return": float(np.min(returns)),
             "max_return": float(np.max(returns)),
         }
+
+
+class CQLTrainer:
+    """Training loop for CQL."""
+
+    def __init__(self, algorithm, dataset: dict, config, logger: Logger):
+        self.algorithm = algorithm
+        self.config = config
+        self.logger = logger
+
+        obs_dim = dataset["observations"].shape[1]
+        actions = dataset["actions"]
+        act_dim = actions.shape[1] if actions.ndim > 1 else 1
+
+        n = len(dataset["observations"])
+        self.buffer = ReplayBuffer(
+            capacity=n,
+            obs_dim=obs_dim,
+            act_dim=act_dim,
+            device=algorithm.device,
+        )
+        self.buffer.load_from_dataset(dataset)
+
+    def train(self) -> dict:
+        n_epochs = self.config.n_epochs
+        batch_size = self.config.batch_size
+        steps_per_epoch = max(1, len(self.buffer) // batch_size)
+
+        all_losses = []
+        step = 0
+
+        for epoch in range(n_epochs):
+            epoch_metrics = []
+            for _ in range(steps_per_epoch):
+                batch = self.buffer.sample(batch_size)
+                metrics = self.algorithm.train_step(batch)
+                epoch_metrics.append(metrics)
+                step += 1
+
+            avg = {k: float(np.mean([m[k] for m in epoch_metrics])) for k in epoch_metrics[0]}
+            all_losses.append(avg.get("q_loss", 0.0))
+
+            log_entry = {"epoch": epoch, **avg}
+            self.logger.log(log_entry, step=epoch)
+
+            if (epoch + 1) % 5 == 0 or epoch == 0:
+                self.logger.print_summary(log_entry)
+
+            if (epoch + 1) % 10 == 0:
+                ckpt_path = str(self.logger.run_dir / f"checkpoint_epoch{epoch+1}.pt")
+                self.algorithm.save(ckpt_path)
+
+        final_path = str(self.logger.run_dir / "checkpoint.pt")
+        self.algorithm.save(final_path)
+
+        return {"final_loss": all_losses[-1], "losses": all_losses}
+
+    def evaluate(self, env, n_episodes: int = 10) -> dict:
+        returns = []
+        for _ in range(n_episodes):
+            obs = env.reset()
+            done = False
+            ep_return = 0.0
+            while not done:
+                action = self.algorithm.select_action(obs, deterministic=True)
+                obs, reward, done, _ = env.step(action)
+                ep_return += reward
+            returns.append(ep_return)
+        return {
+            "mean_return": float(np.mean(returns)),
+            "std_return": float(np.std(returns)),
+        }
+
+
+class IQLTrainer:
+    """Training loop for IQL."""
+
+    def __init__(self, algorithm, dataset: dict, config, logger: Logger):
+        self.algorithm = algorithm
+        self.config = config
+        self.logger = logger
+
+        obs_dim = dataset["observations"].shape[1]
+        actions = dataset["actions"]
+        act_dim = actions.shape[1] if actions.ndim > 1 else 1
+
+        n = len(dataset["observations"])
+        self.buffer = ReplayBuffer(
+            capacity=n,
+            obs_dim=obs_dim,
+            act_dim=act_dim,
+            device=algorithm.device,
+        )
+        self.buffer.load_from_dataset(dataset)
+
+    def train(self) -> dict:
+        n_epochs = self.config.n_epochs
+        batch_size = self.config.batch_size
+        steps_per_epoch = max(1, len(self.buffer) // batch_size)
+
+        all_losses = []
+        step = 0
+
+        for epoch in range(n_epochs):
+            epoch_metrics = []
+            for _ in range(steps_per_epoch):
+                batch = self.buffer.sample(batch_size)
+                metrics = self.algorithm.train_step(batch)
+                epoch_metrics.append(metrics)
+                step += 1
+
+            avg = {k: float(np.mean([m[k] for m in epoch_metrics])) for k in epoch_metrics[0]}
+            all_losses.append(avg.get("value_loss", avg.get("q_loss", 0.0)))
+
+            log_entry = {"epoch": epoch, **avg}
+            self.logger.log(log_entry, step=epoch)
+
+            if (epoch + 1) % 5 == 0 or epoch == 0:
+                self.logger.print_summary(log_entry)
+
+            if (epoch + 1) % 10 == 0:
+                ckpt_path = str(self.logger.run_dir / f"checkpoint_epoch{epoch+1}.pt")
+                self.algorithm.save(ckpt_path)
+
+        final_path = str(self.logger.run_dir / "checkpoint.pt")
+        self.algorithm.save(final_path)
+
+        return {"final_loss": all_losses[-1], "losses": all_losses}
+
+    def evaluate(self, env, n_episodes: int = 10) -> dict:
+        returns = []
+        for _ in range(n_episodes):
+            obs = env.reset()
+            done = False
+            ep_return = 0.0
+            while not done:
+                action = self.algorithm.select_action(obs, deterministic=True)
+                obs, reward, done, _ = env.step(action)
+                ep_return += reward
+            returns.append(ep_return)
+        return {
+            "mean_return": float(np.mean(returns)),
+            "std_return": float(np.std(returns)),
+        }
+
+
+class TD3BCTrainer:
+    """Training loop for TD3+BC."""
+
+    def __init__(self, algorithm, dataset: dict, config, logger: Logger):
+        self.algorithm = algorithm
+        self.config = config
+        self.logger = logger
+
+        obs_dim = dataset["observations"].shape[1]
+        actions = dataset["actions"]
+        act_dim = actions.shape[1] if actions.ndim > 1 else 1
+
+        n = len(dataset["observations"])
+        self.buffer = ReplayBuffer(
+            capacity=n,
+            obs_dim=obs_dim,
+            act_dim=act_dim,
+            device=algorithm.device,
+        )
+        self.buffer.load_from_dataset(dataset)
+
+    def train(self) -> dict:
+        n_epochs = self.config.n_epochs
+        batch_size = self.config.batch_size
+        steps_per_epoch = max(1, len(self.buffer) // batch_size)
+
+        all_losses = []
+        step = 0
+
+        for epoch in range(n_epochs):
+            epoch_metrics = []
+            for _ in range(steps_per_epoch):
+                batch = self.buffer.sample(batch_size)
+                metrics = self.algorithm.train_step(batch)
+                epoch_metrics.append(metrics)
+                step += 1
+
+            avg = {k: float(np.mean([m[k] for m in epoch_metrics])) for k in epoch_metrics[0]}
+            all_losses.append(avg.get("q_loss", 0.0))
+
+            log_entry = {"epoch": epoch, **avg}
+            self.logger.log(log_entry, step=epoch)
+
+            if (epoch + 1) % 5 == 0 or epoch == 0:
+                self.logger.print_summary(log_entry)
+
+            if (epoch + 1) % 10 == 0:
+                ckpt_path = str(self.logger.run_dir / f"checkpoint_epoch{epoch+1}.pt")
+                self.algorithm.save(ckpt_path)
+
+        final_path = str(self.logger.run_dir / "checkpoint.pt")
+        self.algorithm.save(final_path)
+
+        return {"final_loss": all_losses[-1], "losses": all_losses}
+
+    def evaluate(self, env, n_episodes: int = 10) -> dict:
+        returns = []
+        for _ in range(n_episodes):
+            obs = env.reset()
+            done = False
+            ep_return = 0.0
+            while not done:
+                action = self.algorithm.select_action(obs, deterministic=True)
+                obs, reward, done, _ = env.step(action)
+                ep_return += reward
+            returns.append(ep_return)
+        return {
+            "mean_return": float(np.mean(returns)),
+            "std_return": float(np.std(returns)),
+        }
