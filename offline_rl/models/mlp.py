@@ -155,5 +155,5 @@ def save_model(model: nn.Module, path: str):
 
 def load_model(model: nn.Module, path: str) -> nn.Module:
     """Load model state dict in-place and return model."""
-    model.load_state_dict(torch.load(path, map_location="cpu"))
+    model.load_state_dict(torch.load(path, map_location="cpu", weights_only=True))
     return model
