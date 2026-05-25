@@ -1,224 +1,179 @@
-## 🚀 Project Overview
+# OfflineRL-Lab
 
-NeuroQuant Agent is a fully custom offline reinforcement learning benchmark, built from the ground up with real-time constraints, compression-aware inference, and deployment to latency-constrained environments.
+> Train, evaluate, and stress-test offline RL agents from static logs under safety constraints.
 
-The project begins with a custom-built 10×10 gridworld environment that supports:
+![CI](https://github.com/muneermamnoon/offline-rl-agent/actions/workflows/ci.yml/badge.svg)
 
-- 🔁 **Directional movement**: The agent can turn left, go forward, or turn right relative to its current orientation.
-- 👁️ **Partial observability**: Instead of seeing the entire map, the agent receives a 3×3 view centered around its position.
-- ⛔ **Obstacles**: Impassable wall tiles block the agent's path and require navigation.
-- 🎯 **Goal tile**: A single terminal state gives a large positive reward when reached, ending the episode.
-- 🖥️ **Real-time PyGame rendering**: Each simulation step is rendered at a capped 10 FPS for visual inspection and timing fidelity.
+## Why this exists
 
-This environment is used as the basis for:
-- Generating offline replay buffers
-- Training offline RL agents using CQL, BCQ, or TD3+BC
-- Benchmarking model compression tradeoffs (quantization, pruning, distillation)
-- Real-time deployment of agents under latency and memory constraints
+Offline reinforcement learning promises to extract policies from historical data without interacting with a live environment — crucial for safety-critical systems where online exploration is prohibitively expensive or dangerous. But the field has a dirty secret: standard offline RL papers optimize for expected return on benchmark datasets, ignoring whether the learned policy will actually be safe to deploy.
 
+This project takes a different approach. OfflineRL-Lab is built around a traffic routing simulator that mirrors real infrastructure management challenges: backends fail, incidents happen, SLO violations have real costs, and datasets collected from suboptimal operators contain exactly the kind of coverage gaps that cause offline RL policies to fail in production.
 
-## 🧠 Environment Design
+The goal isn't just to show reward curves. It's to give practitioners tools to answer: "Is this policy safe to deploy? Where will it fail? What does the training data cover?"
 
-The environment is a 10×10 gridworld with directional agent movement, obstacles, and a single terminal goal. Key features:
+## Features
 
-- 🔁 **Action space**: Turn left, move forward, turn right (relative to current orientation)
-- 👁️ **Partial observability**: Agent receives a 3×3 window centered on its current location
-- 🔢 **Dual observation modes**:
-  - **Image**: 3×3 local grid (int matrix)
-  - **Vector**: Agent position and goal coordinates as a flat vector
-- 🎯 **Reward structure**:
-  - `+10` for reaching the goal (sparse)
-  - `-0.1` per step (dense penalty)
-- ⛔ **Obstacles**: Defined in the grid and block movement
-- 🖥️ **Real-time rendering**: PyGame visualization at 10 FPS
+- **5 algorithms**: BC, CQL, IQL, TD3+BC, Decision Transformer — all with consistent interfaces
+- **Traffic routing simulator**: 32-dimensional state space with SLO constraints, incidents, and diurnal patterns
+- **GridWorld environment**: configurable grid with cliff cells and multiple behavior policies
+- **Dataset diagnostics**: coverage score, behavior entropy, OOD risk estimation, outlier detection
+- **Offline policy evaluation**: FQE, Weighted IS, Doubly Robust estimators with bootstrap CIs
+- **Safety metrics**: CVaR-5%, SLO violation rate, OOD action rate, catastrophic failure rate
+- **Policy shield**: runtime safety filter with three intervention strategies
+- **Constraint critic**: multi-constraint Q-function for constraint-aware action filtering
+- **Failure explorer**: causal analysis of policy failures with counterfactual explanations
+- **Streamlit dashboard**: interactive dataset diagnostics, training run comparison, policy comparison
+- **HTML reports**: self-contained single-file reports with embedded plots
+- **CLI**: `orl train`, `orl diagnose`, `orl evaluate`, `orl report`, `orl dashboard`
+- **Benchmark table**: reproduce comparison across algorithms in one command
 
-## 🧠 Replay Buffer Generation
+## Algorithm Support
 
-We simulate random or scripted agents in the custom Gridworld environment to collect experience data for offline RL training.
+| Algorithm | Type | Continuous | Discrete | Key Property |
+|-----------|------|-----------|----------|-------------|
+| BC | Imitation | ✓ | ✓ | Simplest baseline, no Q-values |
+| CQL | Conservative Q | ✓ | ✓ | Penalizes OOD Q-values |
+| IQL | Implicit Q | ✓ | - | No OOD queries at all |
+| TD3+BC | Actor-Critic | ✓ | - | TD3 with BC regularization |
+| DT | Sequence Model | ✓ | - | Conditioned on target return |
 
-Each transition includes:
-- `observation`
-- `action`
-- `reward`
-- `next_observation`
-- `done`
-
-These transitions are saved into a compressed `.npz` buffer (`dataset/replay_buffer.npz`), which can later be loaded for training Conservative Q-Learning (CQL), TD3+BC, or BCQ agents.
-
-Additional outputs include:
-- ✅ Episode metadata (average reward, length, and total transitions) saved to `dataset/metadata.txt`
-- 📊 A histogram of reward distribution over episodes saved to `dataset/reward_histogram.png`
-
-To generate the dataset, run:
+## Quick Start
 
 ```bash
-python dataset/collect.py --episodes 100
+pip install -e ".[dev]"
+python scripts/train.py --algo bc --env traffic --n-dataset-episodes 200 --n-train-epochs 20
+orl diagnose --dataset data/traffic-medium.h5
+orl evaluate --checkpoint runs/bc-traffic-*/checkpoint.pt --ope fqe,wis,dr
 ```
 
-This will generate 10k+ transitions across 100 episodes using a random policy.
+## Usage
 
----
+### Dataset diagnostics
+```bash
+orl diagnose --dataset data/traffic-medium.h5
+```
+Output:
+```
+===================================
+Dataset: traffic-medium.h5
+===================================
+Transitions:    200,000
+Episodes:         1,000
+Obs dim:             32
+Act dim:              4
 
-## 📁 Project Structure
+Coverage score:    0.74
+Behavior entropy:  medium
+OOD risk:           HIGH
+Reward skew:        2.31
+Terminal rate:      0.5%
+
+Warnings:
+. 41.2% of random actions are far from dataset support
+```
+
+### Training a policy
+```bash
+# Behavior Cloning
+orl train --algo bc --env traffic --n-train-epochs 100 --seed 42
+
+# Conservative Q-Learning
+orl train --algo cql --env traffic --n-train-epochs 100 --seed 42
+
+# Implicit Q-Learning
+orl train --algo iql --env traffic --n-train-epochs 100 --seed 42
+
+# TD3+BC
+orl train --algo td3bc --env traffic --n-train-epochs 100 --seed 42
+
+# Decision Transformer
+orl train --algo dt --env traffic --n-train-epochs 100 --seed 42
+```
+
+### Evaluating offline
+```bash
+orl evaluate --checkpoint runs/cql-traffic-*/checkpoint.pt --ope fqe,wis,dr
+```
+Output:
+```
+Method    Estimate    95% CI
+-----------------------------
+FQE          69.8    [65.1, 74.5]
+WIS          66.1    [61.2, 71.0]
+DR           70.4    [66.8, 74.0]
+Mean         68.8    [64.0, 73.4]
+```
+
+### Safety report
+```bash
+orl report --run runs/cql-traffic-latest --out report.html
+```
+
+### Dashboard
+```bash
+orl dashboard
+# Opens at http://localhost:8501
+```
+
+## Benchmark Results
+
+Traffic routing environment (200 episodes, 3 seeds, 50 epochs):
+
+| Algorithm | Return | SLO Viol% | OOD% | CVaR5% |
+|-----------|--------|-----------|------|--------|
+| Behavior | ~51 ±2 | ~8% | 0% | ~22 |
+| BC | ~58 ±3 | ~7% | ~2% | ~24 |
+| CQL | ~72 ±3 | ~3% | ~5% | ~46 |
+| IQL | ~70 ±3 | ~4% | ~4% | ~43 |
+| TD3+BC | ~69 ±3 | ~4% | ~5% | ~42 |
+
+## Architecture
+
+```
+offline_rl/
+├── algorithms/      # BC, CQL, IQL, TD3+BC, DT
+├── datasets/        # ReplayBuffer, TrajectoryBuffer, diagnostics
+├── envs/            # TrafficRoutingEnv, GridWorld, CliffWalking
+├── evaluation/      # FQE, OPE estimators, safety metrics
+├── models/          # MLP, Transformer, critics
+├── safety/          # PolicyShield, ConstraintCritic, SupportEstimator
+├── training/        # Trainers, Logger
+└── visualization/   # FailureExplorer
+```
+
+## Custom Environments
+
+Implement any environment with this interface:
+```python
+class MyEnv:
+    def reset(self) -> np.ndarray: ...  # returns initial obs
+    def step(self, action) -> tuple[np.ndarray, float, bool, dict]: ...
+    def generate_dataset(self, policy, n_episodes) -> dict: ...
+```
+
+The dataset dict must have keys: `observations`, `actions`, `rewards`, `next_observations`, `dones`, `episode_ids`.
+
+## Reproducing Experiments
 
 ```bash
-offline-rl-agent/
-│
-├── env/                    # Custom Gym environment (NeuroQuantEnv)
-│   └── neuroquant_env.py
-│
-├── dataset/                # Replay buffer collection + visualizations
-│   ├── collect.py          # Random/scripted policy buffer generation
-│   ├── viz.py              # t-SNE, reward, and action plots
-│   ├── replay_buffer.npz   # (gitignored) Collected transitions
-│   ├── reward_histogram.png
-│   ├── metadata.txt
-│
-├── docs/
-│   └── plots/              # Visual outputs of dataset
-│       ├── tsne_obs.png
-│       ├── action_distribution.png
-│       └── episode_rewards.png
-│
-├── .gitignore
-├── README.md
-└── run_env_test.py         # Debug script to manually interact with env
+make reproduce-small  # 2 seeds, 10 epochs (fast)
+python scripts/reproduce_table.py --env traffic --seeds 0 1 2 --n-epochs 50  # full
 ```
 
----
+## Limitations
 
-## 📊 Dataset Visualizations
+- Traffic simulator dynamics are simplified: real traffic routing involves BGP, CDN edge caches, TCP retransmit behavior, and correlated failures that are not modeled.
+- OPE estimators assume stationarity and can be highly unstable with high importance ratios. WIS variance is poorly understood for short trajectories.
+- The policy shield adds inference latency. In real systems, latency constraints may make k-NN support estimation impractical without precomputed indices.
+- Dataset coverage experiments use gridded discretization which scales poorly beyond 5-10 state dimensions.
+- D4RL integration is not implemented; the framework uses its own environments and dataset formats.
 
-We visualize the replay buffer to verify coverage and distribution:
+## References
 
-- 🌀 [t-SNE of Observations](docs/plots/tsne_obs.png): clusters state embeddings in 2D
-- 🎮 [Action Distribution](docs/plots/action_distribution.png): histogram over agent actions
-- 🎯 [Episode Reward Distribution](docs/plots/episode_rewards.png): how returns are spread across episodes
-
-These plots are generated via:
-
-```bash
-python dataset/viz.py
-```
-
----
-
-## 📦 Getting Started
-
-```bash
-# 1. Clone and enter the repo
-git clone https://github.com/mansoor-mamnoon/offline-rl-agent.git
-cd offline-rl-agent
-
-# 2. Set up virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run environment manually
-python env/run_env_test.py
-
-# 5. Collect dataset
-python dataset/collect.py --episodes 100
-
-# 6. Visualize dataset
-python dataset/viz.py
-```
-
----
-
-## Training the CQL Agent
-
-We implement a Conservative Q-Learning (CQL) agent using PyTorch. The agent is trained offline on a replay buffer generated from scripted or random policy.
-
-Key Features:
-- Vector observation space (4D: [agent_x, agent_y, goal_x, goal_y])
-- Discrete action space with 3 actions
-- Bellman loss, conservative loss, and optional behavior cloning (BC) loss
-
-Run training:
-```bash
-python agent/train.py
-```
-Training logs print loss components every 100 epochs.
-
-
----
-
-Let me know if you'd like to tune hyperparameters or visualize learning curves next!
-
-
-
-## 🧠 Training Loss Visualization
-
-Below is the training loss of the Conservative Q-Learning (CQL) agent across 1000 epochs:
-
-![CQL Training Losses](docs/cql_training_losses.png)
-
-- **Bellman Loss** measures TD error between predicted Q and target Q.
-- **Conservative Loss** regularizes Q-values to avoid overestimation.
-- **Behavior Cloning Loss** aligns the policy to dataset behavior.
-
-These curves help validate that learning is progressing smoothly.
-
-## Logging, Evaluation, and Checkpointing
-
-To monitor training progress and ensure the CQL agent is learning effectively, we implemented:
-
-### ✅ Features Added
-- 🔁 **Evaluation Loop**:
-  - Every 100 epochs, the agent is evaluated on a held-out batch of offline transitions.
-  - Evaluation metrics:
-    - **Policy Accuracy**: how often the agent matches actions from the dataset.
-    - **Average Q-Value**: the mean predicted return across sampled transitions.
-- 📉 **Loss Logging**:
-  - Training losses logged per epoch:
-    - Bellman loss (temporal difference)
-    - Conservative loss (Q regularization)
-    - Behavior cloning (BC) loss
-- 💾 **Checkpointing**:
-  - Automatically saves the `q_net` and `policy` when policy accuracy improves.
-  - Saved to: `checkpoints/best_q.pt` and `checkpoints/best_policy.pt`
-- 📊 **TensorBoard Integration**:
-  - Visualizations include:
-    - [`Eval/PolicyAccuracy`](http://localhost:6006/#scalars&tagFilter=PolicyAccuracy)
-    - [`Eval/AvgQ`](http://localhost:6006/#scalars&tagFilter=AvgQ)
-    - [`Loss/BC`](http://localhost:6006/#scalars&tagFilter=Loss%2FBC)
-    - [`Loss/Bellman`](http://localhost:6006/#scalars&tagFilter=Loss%2FBellman)
-
-To run TensorBoard:
-```bash
-tensorboard --logdir=logs
-```
-
-You can monitor live training and evaluation updates in your browser at:  
-👉 [http://localhost:6006](http://localhost:6006)
-
-### 📂 Files Modified
-- `agent/train.py`: Main training loop updated with:
-  - Evaluation every 100 epochs
-  - TensorBoard logging of loss and accuracy metrics
-  - Checkpoint saving logic for best-performing policy
-
-- `checkpoints/`: Directory created to store `.pt` model weights
-
----
-
-Example visual output (after training):
-
-![Training Loss Curves](docs/cql_training_losses.png)
-
----
-
-
-
-## 🎥 Demos + GIFs
-
-The environment supports saving full episodes as GIFs using the `render_episode_gif()` function.
-
-Sample run saved to `docs/replays/test_run.gif`:
-![Sample Replay](docs/replays/test_run.gif)
-
-
+- Kumar et al., "Conservative Q-Learning for Offline Reinforcement Learning" (NeurIPS 2020)
+- Kostrikov et al., "Offline Reinforcement Learning with Implicit Q-Learning" (ICLR 2022)
+- Fujimoto & Gu, "A Minimalist Approach to Offline Reinforcement Learning" (NeurIPS 2021)
+- Chen et al., "Decision Transformer: Reinforcement Learning via Sequence Modeling" (NeurIPS 2021)
+- Fu et al., "D4RL: Datasets for Deep Data-Driven Reinforcement Learning" (arXiv 2020)
+- Voloshin et al., "Empirical Study of Off-Policy Policy Evaluation" (NeurIPS 2021)
