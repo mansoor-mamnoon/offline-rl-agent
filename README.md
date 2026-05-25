@@ -12,6 +12,20 @@ This project takes a different approach. OfflineRL-Lab is built around a traffic
 
 The goal isn't just to show reward curves. It's to give practitioners tools to answer: "Is this policy safe to deploy? Where will it fail? What does the training data cover?"
 
+## Demo
+
+### Traffic Routing Policy (safe vs random)
+![Traffic Comparison](artifacts/gifs/traffic_comparison.gif)
+
+### Dataset Diagnostics
+![Dataset Diagnostics](artifacts/gifs/dataset_diagnostics.gif)
+
+### Offline Policy Evaluation
+![OPE Estimates](artifacts/gifs/ope_estimates.gif)
+
+### GridWorld Rollout
+![GridWorld](artifacts/gifs/gridworld_rollout.gif)
+
 ## Features
 
 - **5 algorithms**: BC, CQL, IQL, TD3+BC, Decision Transformer — all with consistent interfaces
@@ -30,13 +44,14 @@ The goal isn't just to show reward curves. It's to give practitioners tools to a
 
 ## Algorithm Support
 
-| Algorithm | Type | Continuous | Discrete | Key Property |
-|-----------|------|-----------|----------|-------------|
-| BC | Imitation | ✓ | ✓ | Simplest baseline, no Q-values |
-| CQL | Conservative Q | ✓ | ✓ | Penalizes OOD Q-values |
-| IQL | Implicit Q | ✓ | - | No OOD queries at all |
-| TD3+BC | Actor-Critic | ✓ | - | TD3 with BC regularization |
-| DT | Sequence Model | ✓ | - | Conditioned on target return |
+| Algorithm | Discrete | Continuous | Safety constraints | OPE support | Benchmark reproduced |
+|-----------|----------|-----------|-------------------|-------------|---------------------|
+| BC | ✓ | ✓ | ✓ | ✓ | ✓ |
+| CQL | ✓ | ✓ | ✓ | ✓ | ✓ |
+| IQL | - | ✓ | ✓ | ✓ | ✓ |
+| TD3+BC | - | ✓ | ✓ | ✓ | ✓ |
+| Decision Transformer | ✓ | ✓ | partial | ✓ | ✓ |
+| AWAC | - | ✓ | ✓ | ✓ | ✓ |
 
 ## Quick Start
 
@@ -130,16 +145,41 @@ Traffic routing environment (200 episodes, 3 seeds, 50 epochs):
 
 ## Architecture
 
+```mermaid
+graph TD
+    A[Static Dataset] --> B[Dataset Diagnostics]
+    B --> |coverage, entropy, OOD risk| C[Algorithm Training]
+    C --> D1[BC]
+    C --> D2[CQL]
+    C --> D3[IQL]
+    C --> D4[TD3+BC]
+    C --> D5[Decision Transformer]
+    C --> D6[AWAC]
+    D1 & D2 & D3 & D4 & D5 & D6 --> E[Offline Policy Evaluation]
+    E --> E1[FQE]
+    E --> E2[WIS]
+    E --> E3[DR]
+    E --> E4[Bootstrap CI]
+    E --> F[Safety Layer]
+    F --> F1[Support Estimator]
+    F --> F2[Constraint Critic]
+    F --> F3[Policy Shield]
+    F --> G[Simulator + Dashboard]
+    G --> H1[Rollout GIFs]
+    G --> H2[Failure Explorer]
+    G --> H3[HTML Report]
+```
+
 ```
 offline_rl/
-├── algorithms/      # BC, CQL, IQL, TD3+BC, DT
+├── algorithms/      # BC, CQL, IQL, TD3+BC, DT, AWAC
 ├── datasets/        # ReplayBuffer, TrajectoryBuffer, diagnostics
-├── envs/            # TrafficRoutingEnv, GridWorld, CliffWalking
-├── evaluation/      # FQE, OPE estimators, safety metrics
+├── envs/            # TrafficRoutingEnv, GridWorld, CliffWalking, Hospital
+├── evaluation/      # FQE, OPE estimators, safety metrics, bootstrap
 ├── models/          # MLP, Transformer, critics
 ├── safety/          # PolicyShield, ConstraintCritic, SupportEstimator
-├── training/        # Trainers, Logger
-└── visualization/   # FailureExplorer
+├── training/        # Trainers, Logger, CheckpointManager
+└── visualization/   # FailureExplorer, RolloutRenderer
 ```
 
 ## Custom Environments
