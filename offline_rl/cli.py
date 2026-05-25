@@ -195,3 +195,76 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
 
     click.echo(f"[orl] Training complete. Final loss: {results['final_loss']:.4f}")
     click.echo(f"[orl] Run saved to: {run_dir}")
+
+
+@cli.command()
+@click.option("--checkpoint", required=True, help="Path to checkpoint .pt file")
+@click.option("--dataset", required=True, help="Path to HDF5 dataset file")
+@click.option("--ope", default="fqe,wis,dr", help="Comma-separated OPE methods")
+@click.option("--algo", default="cql", type=click.Choice(["bc", "cql", "iql", "td3bc"]))
+def evaluate(checkpoint, dataset, ope, algo):
+    """Evaluate a policy checkpoint using offline policy evaluation methods."""
+    methods = [m.strip() for m in ope.split(",")]
+    click.echo(f"[orl] Evaluating checkpoint: {checkpoint}")
+    click.echo(f"[orl] Dataset: {dataset}")
+    click.echo(f"[orl] Methods: {methods}")
+
+    from offline_rl.datasets.loader import load_dataset
+    from offline_rl.evaluation.ope import OPEEvaluator
+
+    raw_dataset = load_dataset(dataset)
+    click.echo(f"[orl] Dataset: {len(raw_dataset['observations'])} transitions")
+
+    # Load policy
+    if algo == "bc":
+        from offline_rl.algorithms.bc import BehaviorCloning
+        policy = BehaviorCloning.load(checkpoint)
+    elif algo == "cql":
+        from offline_rl.algorithms.cql import CQL
+        policy = CQL.load(checkpoint)
+    elif algo == "iql":
+        from offline_rl.algorithms.iql import IQL
+        policy = IQL.load(checkpoint)
+    elif algo == "td3bc":
+        from offline_rl.algorithms.td3_bc import TD3BC
+        policy = TD3BC.load(checkpoint)
+    else:
+        raise click.BadParameter(f"Unknown algo: {algo}")
+
+    evaluator = OPEEvaluator(raw_dataset)
+    result = evaluator.evaluate_policy(policy, policy_name=algo, methods=methods)
+
+    try:
+        from rich.console import Console
+        from rich.table import Table
+        console = Console()
+        table = Table(title=f"OPE Results: {algo}", header_style="bold cyan")
+        table.add_column("Method", style="dim")
+        table.add_column("Estimate")
+        if result.fqe_estimate is not None:
+            table.add_row("FQE", f"{result.fqe_estimate:.4f}")
+        if result.wis_estimate is not None:
+            table.add_row("WIS", f"{result.wis_estimate:.4f}")
+        if result.dr_estimate is not None:
+            table.add_row("DR", f"{result.dr_estimate:.4f}")
+        lo, hi = result.bootstrap_ci_95
+        table.add_row("Bootstrap CI 95%", f"[{lo:.4f}, {hi:.4f}]")
+        console.print(table)
+    except ImportError:
+        click.echo(f"FQE:  {result.fqe_estimate}")
+        click.echo(f"WIS:  {result.wis_estimate}")
+        click.echo(f"DR:   {result.dr_estimate}")
+        click.echo(f"CI95: {result.bootstrap_ci_95}")
+
+
+@cli.command()
+@click.option("--port", default=8501, type=int)
+def dashboard(port):
+    """Launch the OfflineRL-Lab Streamlit dashboard."""
+    import subprocess
+    import sys
+    dashboard_path = Path(__file__).parent.parent / "dashboard" / "app.py"
+    subprocess.run(
+        [sys.executable, "-m", "streamlit", "run", str(dashboard_path),
+         "--server.port", str(port)]
+    )
