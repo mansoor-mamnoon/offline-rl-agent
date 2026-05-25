@@ -292,3 +292,201 @@ def dashboard(port):
     subprocess.run(
         [sys.executable, "-m", "streamlit", "run", str(dashboard_path), "--server.port", str(port)]
     )
+
+
+@cli.command()
+@click.option("--checkpoint", required=True, help="Path to checkpoint.pt")
+@click.option(
+    "--env",
+    default="traffic",
+    type=click.Choice(["traffic", "gridworld", "cliffwalking"]),
+)
+@click.option("--out", default="artifacts/gifs/rollout.gif", help="Output GIF path")
+@click.option("--n-steps", default=100, type=int)
+@click.option("--seed", default=42, type=int)
+@click.option("--fps", default=10, type=int)
+@click.option(
+    "--compare",
+    is_flag=True,
+    default=False,
+    help="Compare multiple policies",
+)
+def render(checkpoint, env, out, n_steps, seed, fps, compare):
+    """Generate a rollout GIF from a trained policy checkpoint."""
+    import os
+    import torch
+
+    from offline_rl.visualization.rollout_renderer import collect_rollout, save_gif
+
+    # Load environment
+    if env == "traffic":
+        from offline_rl.envs.traffic_routing import TrafficRoutingEnv
+
+        environment = TrafficRoutingEnv()
+    elif env == "gridworld":
+        from offline_rl.envs.gridworld import GridWorld, GridWorldConfig
+
+        environment = GridWorld(GridWorldConfig())
+    elif env == "cliffwalking":
+        from offline_rl.envs.cliffwalking import make_cliff_walking
+
+        environment = make_cliff_walking()
+
+    # Resolve glob in checkpoint path
+    ckpt_path = Path(checkpoint)
+    if "*" in str(ckpt_path):
+        from glob import glob
+
+        matches = sorted(glob(str(ckpt_path)))
+        if matches:
+            ckpt_path = Path(matches[-1])
+        else:
+            click.echo(f"No checkpoint found matching: {checkpoint}")
+            return
+
+    ckpt = torch.load(str(ckpt_path), map_location="cpu", weights_only=False)
+
+    # Reconstruct policy
+    obs_dim = ckpt.get("obs_dim", 32)
+    act_dim = ckpt.get("act_dim", 4)
+
+    from offline_rl.models.mlp import GaussianMLP
+
+    policy_net = GaussianMLP(obs_dim, act_dim, [256, 256])
+    if "policy" in ckpt:
+        policy_net.load_state_dict(ckpt["policy"])
+    elif "model_state" in ckpt:
+        policy_net.load_state_dict(ckpt["model_state"])
+    elif "actor" in ckpt:
+        # For algorithms that store actor instead of policy
+        try:
+            policy_net.load_state_dict(ckpt["actor"])
+        except Exception:
+            click.echo("Warning: could not load actor weights, using random policy")
+    policy_net.eval()
+
+    def policy_fn(obs):
+        with torch.no_grad():
+            mean, _ = policy_net(torch.FloatTensor(obs).unsqueeze(0))
+            return torch.tanh(mean).squeeze(0).numpy()
+
+    click.echo(f"Collecting rollout ({n_steps} steps)...")
+    np.random.seed(seed)
+    frames, metrics = collect_rollout(environment, policy_fn, max_steps=n_steps, seed=seed)
+
+    out_path = save_gif(frames, out, fps=fps)
+    click.echo(f"GIF saved: {out_path}")
+    click.echo(f"Return: {metrics['total_return']:.2f} over {metrics['n_steps']} steps")
+
+
+@cli.command()
+@click.option("--runs", multiple=True, required=True, help="Run directories to compare")
+@click.option("--metric", default="loss", help="Metric to compare")
+@click.option("--out", default=None, help="Save comparison plot to path")
+def compare(runs, metric, out):
+    """Compare multiple training runs side by side."""
+    import json
+
+    try:
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+        _rich = True
+    except ImportError:
+        _rich = False
+
+    all_metrics = {}
+    for run_path in runs:
+        p = Path(run_path)
+        if not p.exists():
+            click.echo(f"Warning: {run_path} not found, skipping")
+            continue
+        metrics_file = p / "metrics.jsonl"
+        if not metrics_file.exists():
+            click.echo(f"Warning: no metrics.jsonl in {run_path}")
+            continue
+        records = []
+        with open(metrics_file) as f:
+            for line in f:
+                try:
+                    records.append(json.loads(line))
+                except Exception:
+                    pass
+        all_metrics[p.name] = records
+
+    if not all_metrics:
+        click.echo("No valid runs found.")
+        return
+
+    # Print comparison table
+    if _rich:
+        table = Table(title="Run Comparison", show_header=True)
+        table.add_column("Run", style="bold cyan")
+        table.add_column("Steps", justify="right")
+        table.add_column("Final Loss", justify="right")
+        table.add_column("Mean Return", justify="right")
+        table.add_column("Best Loss", justify="right")
+
+        for run_name, records in all_metrics.items():
+            if not records:
+                continue
+            final = records[-1]
+            losses = [
+                r.get("loss", r.get("q_loss"))
+                for r in records
+                if r.get("loss") is not None or r.get("q_loss") is not None
+            ]
+            returns = [
+                r.get("mean_return") for r in records if r.get("mean_return") is not None
+            ]
+
+            final_loss_val = final.get("loss", final.get("q_loss"))
+            final_loss_str = (
+                f"{final_loss_val:.4f}" if isinstance(final_loss_val, float) else "N/A"
+            )
+
+            table.add_row(
+                run_name,
+                str(len(records)),
+                final_loss_str,
+                f"{returns[-1]:.2f}" if returns else "N/A",
+                f"{min(losses):.4f}" if losses else "N/A",
+            )
+        console.print(table)
+    else:
+        for run_name, records in all_metrics.items():
+            if records:
+                final = records[-1]
+                click.echo(
+                    f"{run_name}: steps={len(records)}, final_loss={final.get('loss', 'N/A')}"
+                )
+
+    # Optional plot
+    if out:
+        try:
+            import matplotlib
+
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+            for run_name, records in all_metrics.items():
+                steps = list(range(len(records)))
+                values = [r.get("loss", r.get("q_loss")) for r in records]
+                valid = [(s, v) for s, v in zip(steps, values) if v is not None]
+                if valid:
+                    xs, ys = zip(*valid)
+                    ax.plot(xs, ys, label=run_name, linewidth=2)
+
+            ax.set_xlabel("Step")
+            ax.set_ylabel(metric)
+            ax.set_title("Training Run Comparison")
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(out, dpi=150, bbox_inches="tight")
+            plt.close()
+            click.echo(f"Plot saved to {out}")
+        except Exception as e:
+            click.echo(f"Could not save plot: {e}")
