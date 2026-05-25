@@ -9,6 +9,90 @@ from offline_rl.datasets.replay_buffer import ReplayBuffer
 from offline_rl.training.logger import Logger
 
 
+class DTTrainer:
+    """Training loop for Decision Transformer (uses TrajectoryReplayBuffer)."""
+
+    def __init__(self, algorithm, dataset: dict, config, logger: Logger):
+        self.algorithm = algorithm
+        self.config = config
+        self.logger = logger
+
+        from offline_rl.datasets.trajectory_buffer import TrajectoryReplayBuffer
+
+        self.buffer = TrajectoryReplayBuffer(
+            context_len=config.context_len,
+            device=algorithm.device,
+        )
+        self.buffer.load_from_dataset(dataset)
+
+    def train(self) -> dict:
+        n_epochs = self.config.n_epochs
+        batch_size = self.config.batch_size
+        steps_per_epoch = max(1, len(self.buffer) // max(1, batch_size // 10))
+
+        all_losses = []
+        step = 0
+
+        for epoch in range(n_epochs):
+            epoch_losses = []
+            for _ in range(steps_per_epoch):
+                batch = self.buffer.sample(batch_size)
+                metrics = self.algorithm.train_step(batch)
+                epoch_losses.append(metrics["action_loss"])
+                step += 1
+
+            epoch_loss = float(np.mean(epoch_losses))
+            all_losses.append(epoch_loss)
+
+            log_metrics = {"epoch": epoch, "loss": epoch_loss, "action_loss": epoch_loss}
+            self.logger.log(log_metrics, step=epoch)
+
+            if (epoch + 1) % 5 == 0 or epoch == 0:
+                self.logger.print_summary(log_metrics)
+
+            if (epoch + 1) % 10 == 0:
+                ckpt_path = str(self.logger.run_dir / f"checkpoint_epoch{epoch+1}.pt")
+                self.algorithm.save(ckpt_path)
+
+        final_path = str(self.logger.run_dir / "checkpoint.pt")
+        self.algorithm.save(final_path)
+
+        return {"final_loss": all_losses[-1], "losses": all_losses}
+
+    def evaluate(self, env, n_episodes: int = 10) -> dict:
+        """Run policy in environment using DT select_action interface."""
+        returns = []
+        for _ in range(n_episodes):
+            obs = env.reset()
+            done = False
+            ep_return = 0.0
+            obs_history = [obs]
+            act_history = [np.zeros(self.algorithm.act_dim)]
+            rtg_history = [self.config.target_return]
+            t = 0
+
+            while not done:
+                action = self.algorithm.select_action(
+                    np.array(obs_history),
+                    np.array(act_history),
+                    np.array(rtg_history),
+                    timestep=t,
+                )
+                obs, reward, done, _ = env.step(action)
+                ep_return += reward
+                obs_history.append(obs)
+                act_history.append(action)
+                rtg_history.append(rtg_history[-1] - reward)
+                t += 1
+
+            returns.append(ep_return)
+
+        return {
+            "mean_return": float(np.mean(returns)),
+            "std_return": float(np.std(returns)),
+        }
+
+
 class BCTrainer:
     """Training loop for Behavior Cloning."""
 

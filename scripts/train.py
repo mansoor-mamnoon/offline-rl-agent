@@ -119,6 +119,21 @@ def main():
         algorithm = TD3BC(obs_dim, act_dim, algo_cfg)
         TrainerClass = TD3BCTrainer
 
+    elif args.algo == "dt":
+        from offline_rl.algorithms.decision_transformer import DecisionTransformer, DTConfig
+        from offline_rl.training.trainer import DTTrainer
+        algo_cfg = DTConfig(
+            d_model=128,
+            n_layers=3,
+            n_heads=1,
+            context_len=20,
+            lr=1e-4,
+            batch_size=64,
+            n_epochs=args.n_train_epochs,
+        )
+        algorithm = DecisionTransformer(obs_dim, act_dim, algo_cfg)
+        TrainerClass = DTTrainer
+
     else:
         print(f"[train] WARNING: {args.algo} not yet implemented. Using BC.")
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig
