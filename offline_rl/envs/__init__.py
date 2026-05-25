@@ -1,5 +1,6 @@
 from offline_rl.envs.gridworld import GridWorld, GridWorldConfig, random_policy, near_optimal_policy, mixed_policy
 from offline_rl.envs.cliffwalking import CliffWalking, make_cliff_walking
+from offline_rl.envs.traffic_routing import TrafficRoutingEnv, get_policy
 
 __all__ = [
     "GridWorld",
@@ -9,4 +10,6 @@ __all__ = [
     "mixed_policy",
     "CliffWalking",
     "make_cliff_walking",
+    "TrafficRoutingEnv",
+    "get_policy",
 ]
