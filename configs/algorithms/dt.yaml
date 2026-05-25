@@ -1,0 +1,8 @@
+context_len: 20
+d_model: 128
+n_layers: 3
+n_heads: 1
+lr: 1.0e-4
+batch_size: 64
+target_return: 90.0
+dropout: 0.1

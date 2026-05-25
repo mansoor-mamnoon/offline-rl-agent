@@ -1,0 +1,7 @@
+n_backends: 3
+state_dim: 32
+act_dim: 4
+max_steps: 200
+latency_threshold: 200
+error_threshold: 0.01
+load_threshold: 0.9

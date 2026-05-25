@@ -16,3 +16,9 @@ __pycache__/
 logs/
 checkpoints/
 
+# OfflineRL-Lab additions
+data/
+runs/
+wandb/
+*.h5
+*.npz

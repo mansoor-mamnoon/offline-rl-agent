@@ -1,0 +1,4 @@
+grid_size: 10
+start: [0, 0]
+goal: [9, 9]
+max_steps: 200

@@ -1,0 +1,7 @@
+hidden_dims: [256, 256]
+tau: 0.7
+beta: 3.0
+discount: 0.99
+lr: 3.0e-4
+tau_soft: 0.005
+batch_size: 256

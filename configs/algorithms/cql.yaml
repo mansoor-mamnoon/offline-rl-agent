@@ -1,0 +1,11 @@
+hidden_dims: [256, 256]
+lr: 3.0e-4
+alpha: 5.0
+alpha_auto: true
+target_action_gap: -1.0
+tau: 0.005
+discount: 0.99
+n_random_actions: 10
+backup_entropy: true
+batch_size: 256
+temp: 1.0

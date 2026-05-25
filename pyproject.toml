@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "offline-rl-lab"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "h5py",
+    "hydra-core",
+    "click",
+    "streamlit",
+    "plotly",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "tensorboard",
+    "jinja2",
+    "gymnasium",
+    "tqdm",
+    "rich",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+    "mypy",
+    "pytest-timeout",
+]
+
+[project.scripts]
+orl = "offline_rl.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["offline_rl*"]
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100

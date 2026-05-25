@@ -1,0 +1,6 @@
+hidden_dims: [256, 256]
+lr: 3.0e-4
+batch_size: 256
+n_epochs: 100
+l2_reg: 1.0e-5
+action_space: continuous
