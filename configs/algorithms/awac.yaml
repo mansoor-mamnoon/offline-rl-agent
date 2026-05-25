@@ -1,0 +1,7 @@
+hidden_dims: [256, 256]
+lr: 3.0e-4
+beta: 1.0
+discount: 0.99
+tau: 0.005
+batch_size: 256
+n_action_samples: 16

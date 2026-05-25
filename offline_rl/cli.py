@@ -96,7 +96,7 @@ def diagnose(dataset, out):
 
 
 @cli.command()
-@click.option("--algo", default="bc", type=click.Choice(["bc", "cql", "iql", "td3bc", "dt"]))
+@click.option("--algo", default="bc", type=click.Choice(["bc", "cql", "iql", "td3bc", "dt", "awac"]))
 @click.option("--env", default="traffic", type=click.Choice(["traffic", "gridworld"]))
 @click.option("--dataset", default=None, help="Path to HDF5 dataset (generated if not given)")
 @click.option("--config", default=None, help="Path to algorithm config YAML")
@@ -173,6 +173,13 @@ def train(algo, env, dataset, config, seed, out, n_dataset_episodes, n_train_epo
         algo_cfg = TD3BCConfig(n_epochs=n_train_epochs)
         algorithm = TD3BC(obs_dim, act_dim, algo_cfg)
         TrainerClass = TD3BCTrainer
+    elif algo == "awac":
+        from offline_rl.algorithms.awac import AWAC, AWACConfig
+        from offline_rl.training.trainer import AWACTrainer
+
+        algo_cfg = AWACConfig(n_epochs=n_train_epochs)
+        algorithm = AWAC(obs_dim, act_dim, algo_cfg)
+        TrainerClass = AWACTrainer
     else:
         click.echo(f"[orl] Algorithm '{algo}' not yet implemented, using BC fallback.")
         from offline_rl.algorithms.bc import BehaviorCloning, BCConfig

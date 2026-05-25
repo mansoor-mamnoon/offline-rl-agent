@@ -25,7 +25,7 @@ def set_seed(seed: int):
 
 def main():
     parser = argparse.ArgumentParser(description="Train an offline RL algorithm")
-    parser.add_argument("--algo", default="bc", choices=["bc", "cql", "iql", "td3bc", "dt"])
+    parser.add_argument("--algo", default="bc", choices=["bc", "cql", "iql", "td3bc", "dt", "awac"])
     parser.add_argument("--env", default="traffic", choices=["traffic", "gridworld"])
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--n-dataset-episodes", type=int, default=200)
@@ -141,6 +141,19 @@ def main():
         )
         algorithm = DecisionTransformer(obs_dim, act_dim, algo_cfg)
         TrainerClass = DTTrainer
+
+    elif args.algo == "awac":
+        from offline_rl.algorithms.awac import AWAC, AWACConfig
+        from offline_rl.training.trainer import AWACTrainer
+
+        algo_cfg = AWACConfig(
+            hidden_dims=[256, 256],
+            lr=3e-4,
+            batch_size=256,
+            n_epochs=args.n_train_epochs,
+        )
+        algorithm = AWAC(obs_dim, act_dim, algo_cfg)
+        TrainerClass = AWACTrainer
 
     else:
         print(f"[train] WARNING: {args.algo} not yet implemented. Using BC.")
